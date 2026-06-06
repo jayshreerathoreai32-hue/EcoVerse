@@ -1,86 +1,85 @@
-\# Code of Conduct
+# Code of Conduct
 
+## Our Pledge
 
+We as contributors, maintainers, and community members pledge to make participation in EcoVerse a harassment-free experience for everyone, regardless of age, body size, visible or invisible disability, ethnicity, sex characteristics, gender identity and expression, level of experience, education, socio-economic status, nationality, personal appearance, race, religion, or sexual identity and orientation.
 
-\## Our Pledge
+We pledge to act and interact in ways that contribute to an open, welcoming, diverse, inclusive, and healthy community.
 
+---
 
+## Our Standards
 
-We as contributors and maintainers pledge to make participation in EcoVerse
+Examples of behavior that contributes to a positive environment for our community include:
 
-a harassment-free experience for everyone, regardless of age, body size,
+- Using welcoming and inclusive language.
+- Being respectful of differing viewpoints and experiences.
+- Gracefully accepting constructive criticism.
+- Focusing on what is best for the community.
+- Showing empathy toward other community members.
+- Helping new contributors learn and grow.
 
-disability, ethnicity, gender identity, level of experience, nationality,
+Examples of unacceptable behavior include:
 
-personal appearance, race, religion, or sexual identity and orientation.
+- The use of sexualized language or imagery.
+- Trolling, insulting, or derogatory comments.
+- Personal or political attacks.
+- Public or private harassment.
+- Publishing others' private information without explicit permission.
+- Any conduct that could reasonably be considered inappropriate in a professional setting.
 
+---
 
+## Our Responsibilities
 
-\## Our Standards
+Project maintainers are responsible for clarifying and enforcing the standards of acceptable behavior.
 
+Maintainers may take appropriate and fair corrective action in response to behavior that they deem inappropriate, threatening, offensive, or harmful.
 
+Maintainers have the right and responsibility to remove, edit, or reject comments, commits, code, issues, wiki edits, discussions, pull requests, and other contributions that do not align with this Code of Conduct.
 
-Examples of behavior that contributes to a positive environment:
+---
 
+## Scope
 
+This Code of Conduct applies within all project spaces and also applies when an individual is officially representing the project in public spaces.
 
-\- Using welcoming and inclusive language
+Examples of representation include:
 
-\- Being respectful of differing viewpoints and experiences
+- Using an official project email address.
+- Posting via official social media accounts.
+- Acting as an appointed representative at online or offline events.
 
-\- Gracefully accepting constructive criticism
+---
 
-\- Focusing on what is best for the community
+## Enforcement
 
-\- Showing empathy towards other community members
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported directly to the project maintainers through official contact channels.
 
+All complaints will be reviewed and investigated promptly and fairly.
 
+Project maintainers are obligated to respect the privacy and security of reporters whenever possible.
 
-Examples of unacceptable behavior:
+---
 
+## Enforcement Guidelines
 
+Community leaders may take any action they deem appropriate in response to unacceptable behavior, including:
 
-\- The use of sexualized language or imagery
+1. Correction
+2. Warning
+3. Temporary ban
+4. Permanent ban
 
-\- Trolling, insulting/derogatory comments, and personal or political attacks
+The severity of the response should be proportional to the severity and impact of the violation.
 
-\- Public or private harassment
+---
 
-\- Publishing others' private information without explicit permission
+## Attribution
 
-\- Other conduct which could reasonably be considered inappropriate
+This Code of Conduct is adapted from the Contributor Covenant, version 2.1.
 
+For more information, visit:
 
-
-\## Our Responsibilities
-
-
-
-Project maintainers are responsible for clarifying the standards of acceptable
-
-behavior and are expected to take appropriate and fair corrective action in
-
-response to any instances of unacceptable behavior.
-
-
-
-\## Enforcement
-
-
-
-Instances of abusive, harassing, or otherwise unacceptable behavior may be
-
-reported by contacting the project maintainer at GitHub. All complaints will
-
-be reviewed and investigated and will result in a response that is deemed
-
-necessary and appropriate to the circumstances.
-
-
-
-\## Attribution
-
-
-
-This Code of Conduct is adapted from the \[Contributor Covenant](https://www.contributor-covenant.org), version 2.0.
+https://www.contributor-covenant.org/version/2/1/code_of_conduct/
 
