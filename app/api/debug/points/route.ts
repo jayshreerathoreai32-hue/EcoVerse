@@ -1,19 +1,27 @@
 import { NextResponse } from "next/server"
 import dbConnect from "@/lib/mongodb"
 import User from "@/models/User"
-import { 
-  getUserPointsSummary, 
+import {
+  getUserPointsSummary,
   confirmPendingPoints,
   POINT_CONFIRMATION
 } from "@/lib/rewards-system"
 
 // GET /api/debug/points?email=user@email.com - Debug point system for a user
 export async function GET(req: Request) {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: "Debug endpoint disabled in production" }, { status: 403 })
+  }
+
   const { searchParams } = new URL(req.url)
   const email = searchParams.get('email')
 
   if (!email) {
     return NextResponse.json({ error: "Email required" }, { status: 400 })
+  }
+
+  if (typeof email !== 'string') {
+    return NextResponse.json({ error: "Invalid input type" }, { status: 400 })
   }
 
   try {
@@ -26,18 +34,17 @@ export async function GET(req: Request) {
 
     const pointsSummary = getUserPointsSummary(user)
     const confirmationData = confirmPendingPoints(user)
-    
-    // Get transaction breakdown
+
     const transactions = user.rewardTransactions || []
     const confirmedTransactions = transactions.filter((t: any) => t.pointsType === 'confirmed')
     const unconfirmedTransactions = transactions.filter((t: any) => t.pointsType === 'unconfirmed')
-    
+
     const now = new Date()
     const transactionDetails = transactions.map((t: any) => {
       const transactionDate = new Date(t.date)
       const hoursElapsed = (now.getTime() - transactionDate.getTime()) / (1000 * 60 * 60)
       const hoursRemaining = POINT_CONFIRMATION.CONFIRMATION_DELAY_HOURS - hoursElapsed
-      
+
       return {
         ...t,
         hoursElapsed: hoursElapsed.toFixed(2),
@@ -83,11 +90,29 @@ export async function GET(req: Request) {
 
 // POST /api/debug/points - Force confirm points for testing
 export async function POST(req: Request) {
-  const { email, action } = await req.json()
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: "Debug endpoint disabled in production" }, { status: 403 })
+  }
+
+  let email: unknown, action: unknown
+  try {
+    const body = await req.json()
+    email = body.email
+    action = body.action
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 })
+  }
 
   if (!email) {
     return NextResponse.json({ error: "Email required" }, { status: 400 })
   }
+
+  if (typeof email !== 'string') {
+  return NextResponse.json({ error: "Invalid input type" }, { status: 400 })
+}
+if (typeof action !== 'string') {
+  return NextResponse.json({ error: "Invalid action type" }, { status: 400 })
+}
 
   try {
     await dbConnect()
@@ -98,13 +123,11 @@ export async function POST(req: Request) {
     }
 
     if (action === 'confirm_all') {
-      // Force confirm all unconfirmed points
       const unconfirmedPoints = user.unconfirmedPoints || 0
       user.confirmedPoints = (user.confirmedPoints || 0) + unconfirmedPoints
       user.unconfirmedPoints = 0
       user.rewardPoints = user.confirmedPoints
-      
-      // Update all unconfirmed transactions to confirmed
+
       if (user.rewardTransactions) {
         user.rewardTransactions.forEach((t: any) => {
           if (t.pointsType === 'unconfirmed') {
@@ -113,21 +136,20 @@ export async function POST(req: Request) {
           }
         })
       }
-      
+
       await user.save()
-      
+
       return NextResponse.json({
         success: true,
         message: `Confirmed ${unconfirmedPoints} points`,
         newSummary: getUserPointsSummary(user)
       })
     } else if (action === 'add_test_points') {
-      // Add some test points for debugging
       const testPoints = 50
       user.unconfirmedPoints = (user.unconfirmedPoints || 0) + testPoints
       user.rewardPoints = (user.confirmedPoints || 0) + (user.unconfirmedPoints || 0)
       user.totalPointsEarned = (user.totalPointsEarned || 0) + testPoints
-      
+
       user.rewardTransactions = user.rewardTransactions || []
       user.rewardTransactions.push({
         type: 'earned',
@@ -137,9 +159,9 @@ export async function POST(req: Request) {
         description: 'Test points for debugging',
         date: new Date()
       })
-      
+
       await user.save()
-      
+
       return NextResponse.json({
         success: true,
         message: `Added ${testPoints} test unconfirmed points`,
