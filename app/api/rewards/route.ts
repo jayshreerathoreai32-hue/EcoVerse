@@ -108,6 +108,8 @@ export async function POST(req: Request) {
 
   try {
     await dbConnect()
+
+    // Step 1: Initial read for validation (gives specific error messages to frontend)
     const user = await User.findOne({ email }) as any
 
     if (!user) {
@@ -131,7 +133,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Item already purchased" }, { status: 400 })
     }
 
-    // Check if user has enough confirmed points (only confirmed points can be redeemed)
+    // Check if user has enough confirmed points
     const confirmedPoints = user.confirmedPoints || 0;
     if (confirmedPoints < shopItem.cost) {
       return NextResponse.json({
@@ -143,57 +145,75 @@ export async function POST(req: Request) {
       }, { status: 400 })
     }
 
-    // Deduct confirmed points only
-    user.confirmedPoints -= shopItem.cost
-    user.rewardPoints = (user.confirmedPoints || 0) + (user.unconfirmedPoints || 0)
+    // Step 2: Atomic Update to prevent TOCTOU race conditions (Double Spending)
+    // Build the dynamic update object based on item effects
+    const updateQuery: any = {
+      $inc: {
+        confirmedPoints: -shopItem.cost,
+        rewardPoints: -shopItem.cost
+      },
+      $push: {
+        purchasedItems: {
+          itemId: shopItem.id,
+          name: shopItem.name,
+          cost: shopItem.cost,
+          category: shopItem.category,
+          purchasedAt: new Date(),
+          active: true
+        },
+        rewardTransactions: {
+          type: 'redeemed',
+          points: shopItem.cost,
+          pointsType: 'confirmed',
+          reason: 'item_purchase',
+          description: `Purchased ${shopItem.name}`,
+          date: new Date()
+        }
+      }
+    }
 
-    // Add purchased item
-    user.purchasedItems = user.purchasedItems || []
-    user.purchasedItems.push({
-      itemId: shopItem.id,
-      name: shopItem.name,
-      cost: shopItem.cost,
-      category: shopItem.category,
-      purchasedAt: new Date(),
-      active: true
-    })
-
-    // Apply item effects
+    // Apply specific item effects
     switch (shopItem.id) {
       case 'eco_hero_badge':
       case 'carbon_warrior_badge':
-        user.activeBadges = user.activeBadges || []
-        user.activeBadges.push(shopItem.id)
+        updateQuery.$push.activeBadges = shopItem.id
         break
       case 'advanced_analytics':
-        user.hasAdvancedAnalytics = true
+        updateQuery.$set = { hasAdvancedAnalytics: true }
         break
       case 'streak_protector':
-        user.streakProtectors = (user.streakProtectors || 0) + 1
+        updateQuery.$inc.streakProtectors = 1
         break
       case 'double_points':
-        user.doublePointsDays = (user.doublePointsDays || 0) + 1
+        updateQuery.$inc.doublePointsDays = 1
         break
       case 'custom_avatar':
-        // This would be handled in a separate avatar upload endpoint
+        // Handled elsewhere
         break
     }
 
-    // Add transaction record
-    user.rewardTransactions = user.rewardTransactions || []
-    user.rewardTransactions.push({
-      type: 'redeemed',
-      points: shopItem.cost,
-      reason: 'item_purchase',
-      description: `Purchased ${shopItem.name}`,
-      date: new Date()
-    })
+    // Execute atomic update - MongoDB guarantees single-document atomicity
+    const updatedUser = await User.findOneAndUpdate(
+      { 
+        email, 
+        confirmedPoints: { $gte: shopItem.cost },
+        "purchasedItems.itemId": { $ne: itemId } 
+      },
+      updateQuery,
+      { new: true } // Return the updated document
+    )
 
-    await user.save()
+    // If updatedUser is null, it means a concurrent request already deducted the points!
+    if (!updatedUser) {
+      return NextResponse.json({ 
+        error: "Transaction failed", 
+        message: "The purchase could not be completed. The item may have already been purchased or your point balance changed during the transaction."
+      }, { status: 409 })
+    }
 
     return NextResponse.json({
       success: true,
-      remainingPoints: user.rewardPoints,
+      remainingPoints: updatedUser.rewardPoints,
       purchasedItem: shopItem,
       message: `${shopItem.name} redeemed successfully!`
     })
