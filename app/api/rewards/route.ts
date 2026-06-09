@@ -12,10 +12,10 @@ import {
 // GET /api/rewards - Get user's complete rewards data
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
-  const email = req.headers.get("x-user-email") || "test@example.com" // 🔒 Fallback to dev email if no JWT session exists
+  const email = req.headers.get("x-user-email")
 
   if (!email) {
-    return NextResponse.json({ error: "Email required" }, { status: 400 })
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
   try {
@@ -99,11 +99,11 @@ export async function GET(req: Request) {
 // POST /api/rewards/redeem - Redeem reward points for shop items
 export async function POST(req: Request) {
   const { itemId } = await req.json()
-  const email = req.headers.get("x-user-email") || "test@example.com" // 🔒 Fallback to dev email if no JWT session exists
+  const email = req.headers.get("x-user-email")
 
 
   if (!email || !itemId) {
-    return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
+    return NextResponse.json({ error: "Missing required fields or unauthorized" }, { status: !email ? 401 : 400 })
   }
 
   try {

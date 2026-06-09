@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Camera, X, Flashlight, RotateCcw } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { useAuth } from "@/components/auth-provider"
 import { BrowserMultiFormatReader } from "@zxing/browser"
 
 interface BarcodeScannerProps {
@@ -19,7 +18,6 @@ export default function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps)
   const [facingMode, setFacingMode] = useState<"user" | "environment">("environment")
   const videoRef = useRef<HTMLVideoElement>(null)
   const { toast } = useToast()
-  const { user } = useAuth()
 
   const codeReader = new BrowserMultiFormatReader()
 
@@ -95,44 +93,8 @@ export default function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps)
     setFacingMode(facingMode === "user" ? "environment" : "user")
   }
 
-  const handleScan = async (barcode: string) => {
-    try {
-      const scanRes = await fetch("/api/scan", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          barcode,
-          userEmail: user?.email
-        }),
-      });
-
-      const data = await scanRes.json();
-      if (data.error) {
-        toast({ 
-          title: "Product not found", 
-          description: "Unable to find product information for this barcode.",
-          variant: "destructive" 
-        });
-        return;
-      }
-
-      // Show success message with product info
-      toast({
-        title: `Product Scanned: ${data.productName}`,
-        description: `Carbon Estimate: ${data.carbonEstimate} kg CO₂ (${data.category})`,
-      });
-
-      // Close scanner after successful scan
-      onScan(barcode);
-      
-    } catch (err) {
-      console.error("Scan error:", err);
-      toast({
-        title: "Scan Failed",
-        description: "Something went wrong while processing the scan.",
-        variant: "destructive",
-      });
-    }
+  const handleScan = (barcode: string) => {
+    onScan(barcode);
   };
 
   const simulateScan = async () => {
@@ -141,7 +103,7 @@ export default function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps)
         const result = await codeReader.decodeOnceFromVideoElement(videoRef.current)
         if (result && result.getText()) {
           const barcode = result.getText()
-          await handleScan(barcode)
+          handleScan(barcode)
         }
       } catch (error) {
         if ((error as any)?.name !== "NotFoundException") {
@@ -155,10 +117,10 @@ export default function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps)
     }
   }
 
-  const enterBarcodeManually = async () => {
+  const enterBarcodeManually = () => {
     const input = prompt("Enter barcode manually:")
     if (input && input.trim()) {
-      await handleScan(input.trim())
+      handleScan(input.trim())
     }
   }
 

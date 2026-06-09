@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server"
+import { cookies } from "next/headers"
 import dbConnect from "@/lib/mongodb"
 import User from "@/models/User"
+import { signToken } from "@/lib/auth"
 
 export async function POST(req: Request) {
   const body = await req.json()
@@ -42,6 +44,22 @@ export async function POST(req: Request) {
     console.error("Failed to upsert user in google route:", err)
     return NextResponse.json({ error: "Database error" }, { status: 500 })
   }
+
+  // Generate the JWT
+  const token = await signToken({
+    email: userDoc.email,
+    userId: userDoc._id.toString()
+  });
+
+  // Set the token securely as an HttpOnly cookie
+  const cookieStore = await cookies();
+  cookieStore.set('auth_token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 7 * 24 * 60 * 60, // 7 days
+    path: '/',
+  });
 
   // Map the MongoDB document back to the required frontend shape, ensuring we use raw DB values
   const user = {

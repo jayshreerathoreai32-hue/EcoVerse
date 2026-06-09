@@ -6,11 +6,11 @@ export async function PUT(req: Request) {
   try {
     await dbConnect()
 
-    const body = await req.json()
-    const { email, avatarId } = body
+    const email = req.headers.get("x-user-email")
+    const { avatarId } = await req.json()
 
     if (!email || !avatarId) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
+      return NextResponse.json({ error: !email ? "Unauthorized" : "Missing avatarId" }, { status: !email ? 401 : 400 })
     }
 
     const updatedUser = await User.findOneAndUpdate(

@@ -9,6 +9,9 @@ export async function middleware(request: NextRequest) {
   // Clone headers to modify them
   const requestHeaders = new Headers(request.headers);
 
+  // ALWAYS remove any client-supplied identity header to prevent spoofing
+  requestHeaders.delete('x-user-email');
+
   // If a token exists, verify it and attach the email to the headers
   if (token) {
     const payload = await verifyToken(token);
@@ -18,8 +21,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Continue the request, passing along the (potentially) modified headers.
-  // Note: If the token is invalid or missing, we simply pass the request along
-  // WITHOUT the header, allowing the API routes to use their backwards-compatible fallback.
+  // The x-user-email header is now only present if successfully verified from a token.
   return NextResponse.next({
     request: {
       headers: requestHeaders,
@@ -32,6 +34,8 @@ export const config = {
   matcher: [
     '/api/scan/:path*',
     '/api/rewards/:path*',
-    '/api/user/score/:path*'
+    '/api/user/score/:path*',
+    '/api/user/avatar/:path*',
+    '/api/user-packaging/:path*'
   ],
 };

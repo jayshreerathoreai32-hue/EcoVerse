@@ -5,10 +5,10 @@ import { calculateMonthlyBonus, POINT_REWARDS } from "@/lib/rewards-system"
 
 // POST /api/rewards/monthly-check - Check and award monthly bonuses
 export async function POST(req: Request) {
-  const { email } = await req.json()
+  const email = req.headers.get("x-user-email")
 
   if (!email) {
-    return NextResponse.json({ error: "Email required" }, { status: 400 })
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
   try {
@@ -71,11 +71,10 @@ export async function POST(req: Request) {
 
 // GET /api/rewards/monthly-check - Get monthly bonus status
 export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url)
-  const email = searchParams.get('email')
+  const email = req.headers.get("x-user-email")
 
   if (!email) {
-    return NextResponse.json({ error: "Email required" }, { status: 400 })
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
   try {

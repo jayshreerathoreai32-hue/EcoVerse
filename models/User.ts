@@ -38,8 +38,10 @@ const PurchasedItemSchema = new mongoose.Schema({
 
 const UserSchema = new mongoose.Schema({
   name: { type: String, required: true },
+  username: { type: String, default: null },
+  full_name: { type: String, default: null },
   email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
+  password: { type: String, required: false, default: null }, // Managed by Firebase; not stored
   monthlyCarbon: { type: Number, default: 0 },
   totalScanned: { type: Number, default: 0 },
   joinedAt: { type: String, default: () => new Date().toISOString() },
@@ -94,5 +96,23 @@ UserSchema.virtual('sustainabilityTier').get(function() {
   return 'Beginner'
 })
 
-export default mongoose.models.User || mongoose.model("User", UserSchema)
+// In Next.js dev mode, the Node.js process (and Mongoose connection) stays
+// alive across hot-reloads, but the module code re-runs. The standard
+// `mongoose.models.User || mongoose.model(...)` guard would return the old
+// cached model with the stale schema. We force a clean re-registration in
+// development using the official mongoose.deleteModel() API.
+if (process.env.NODE_ENV !== "production") {
+  try {
+    mongoose.deleteModel("User")
+  } catch (_) {
+    // Model not registered yet — first load, nothing to delete
+  }
+}
 
+// Cast to Model<any> to collapse the union type produced by the ternary.
+// Without this, TypeScript raises TS2349 ("not callable") on every
+// .findOne() / .create() / .find() call across all API routes.
+const User =
+  mongoose.models.User || mongoose.model("User", UserSchema)
+
+export default User

@@ -70,6 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({
           name,
           email,
+          password,
           firebaseUid: userCredential.user.uid
         })
       })
@@ -112,42 +113,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    try {
-      // 1. Authenticate with Firebase first
-      const userCredential = await signInWithEmailAndPassword(auth, email, password)
+   const login = async (email: string, password: string): Promise<boolean> => {
+     try {
+       // First authenticate with Firebase
+       const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+       password
+      )
+   
 
-      // 2. Fetch the local user session
-      const res = await fetch("/api/auth/signin", {
+      // Send verified token to backend
+     const res = await fetch("/api/auth/signin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          email, 
-          password, 
-          firebaseUid: userCredential.user.uid 
-        })
-      })
+        body: JSON.stringify({
+        email,
+        password,
+      }),
+    })
 
-      const data = await res.json()
+    const data = await res.json()
+
       if (res.ok) {
-        console.log("Signin avatar:", data.user.avatarId)
-        setUser(data.user)
-        localStorage.setItem("ecoverse-user", JSON.stringify(data.user))
-        return true
-      } else {
-        console.warn("❌ Login failed:", data.error)
-        return false
-      }
-    } catch (err: any) {
-      console.error("🔥 Login error:", err)
-      toast({
-        title: "Login failed",
-        description: "Invalid credentials or user does not exist.",
-        variant: "destructive"
-      })
-      return false
+          setUser(data.user)
+          localStorage.setItem("ecoverse-user", JSON.stringify(data.user))
+           return true
+       }
+       else {
+      console.warn("❌ Login failed:", data.error)
+         return false
     }
+     } 
+  catch (err) {
+    console.error("🔥 Login error:", err)
+    return false
   }
+}
 
   const signInWithGoogle = async (): Promise<boolean> => {
     try {

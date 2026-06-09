@@ -6,11 +6,10 @@ import User from "@/models/User"
 import { calculateLevel, getSustainabilityTier } from "@/lib/rewards-system"
 
 export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url)
-  const email = req.headers.get("x-user-email") || searchParams.get('email') || "test@example.com"
+  const email = req.headers.get("x-user-email")
 
   if (!email) {
-    return NextResponse.json({ error: "Email required" }, { status: 400 })
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
   try {
@@ -69,10 +68,11 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const { email, productName, carbonEstimate } = await req.json()
+  const email = req.headers.get("x-user-email")
+  const { productName, carbonEstimate } = await req.json()
 
   if (!email) {
-    return NextResponse.json({ error: "Email required" }, { status: 400 })
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
   try {
