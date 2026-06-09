@@ -20,7 +20,7 @@ export async function GET(req: Request) {
 
   try {
     await dbConnect()
-    const user = await User.findOne({ email }) as any
+    let user = await User.findOne({ email }) as any
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
@@ -29,14 +29,41 @@ export async function GET(req: Request) {
     // Calculate current level data
     const levelData = calculateLevel(user.totalPointsEarned || 0)
 
-    // Confirm any pending points and get point summary
+    // --- ATOMIC POINT CONFIRMATION ---
+    // We check for points that have passed the confirmation threshold.
     const confirmationData = confirmPendingPoints(user);
+    
     if (confirmationData.confirmedPoints > 0) {
-      // Update user's confirmed points if any were confirmed
-      user.confirmedPoints = (user.confirmedPoints || 0) + confirmationData.confirmedPoints;
-      user.unconfirmedPoints = Math.max(0, (user.unconfirmedPoints || 0) - confirmationData.confirmedPoints);
-      user.rewardPoints = (user.confirmedPoints || 0) + (user.unconfirmedPoints || 0);
-      await user.save();
+      const now = new Date();
+      const transactionIdsToConfirm = confirmationData.confirmedTransactions.map(t => t._id);
+
+      // We perform an atomic update to move points from unconfirmed to confirmed status.
+      // capture the ground-truth updated document using { new: true }.
+      const updatedUser = await User.findOneAndUpdate(
+        { email },
+        {
+          $inc: {
+            confirmedPoints: confirmationData.confirmedPoints,
+            unconfirmedPoints: -confirmationData.confirmedPoints
+          },
+          $set: {
+            "rewardTransactions.$[t].pointsType": "confirmed",
+            "rewardTransactions.$[t].confirmedAt": now
+          }
+        },
+        {
+          arrayFilters: [{ "t._id": { $in: transactionIdsToConfirm } }],
+          new: true,
+          runValidators: true
+        }
+      );
+
+      // Re-assign local user to the ground-truth updated document from DB.
+      // This ensures all subsequent logic (summaries, achievements) uses 
+      // the most accurate and consistent data.
+      if (updatedUser) {
+        user = updatedUser;
+      }
     }
 
     const pointsSummary = getUserPointsSummary(user);
