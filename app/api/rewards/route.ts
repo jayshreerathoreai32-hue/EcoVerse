@@ -52,7 +52,7 @@ export async function GET(req: Request) {
                   $map: {
                     input: {
                       $filter: {
-                        input: "$rewardTransactions",
+                        input: { $ifNull: ["$rewardTransactions", []] },
                         as: "t",
                         cond: {
                           $and: [
@@ -63,7 +63,7 @@ export async function GET(req: Request) {
                       }
                     },
                     as: "mt",
-                    in: "$$mt.points"
+                    in: { $ifNull: ["$$mt.points", 0] }
                   }
                 }
               }
@@ -71,11 +71,21 @@ export async function GET(req: Request) {
           },
           {
             $set: {
-              confirmedPoints: { $add: ["$confirmedPoints", "$matchedPoints"] },
-              unconfirmedPoints: { $subtract: ["$unconfirmedPoints", "$matchedPoints"] },
+              confirmedPoints: {
+                $add: [
+                  { $ifNull: ["$confirmedPoints", 0] },
+                  { $ifNull: ["$matchedPoints", 0] }
+                ]
+              },
+              unconfirmedPoints: {
+                $subtract: [
+                  { $ifNull: ["$unconfirmedPoints", 0] },
+                  { $ifNull: ["$matchedPoints", 0] }
+                ]
+              },
               rewardTransactions: {
                 $map: {
-                  input: "$rewardTransactions",
+                  input: { $ifNull: ["$rewardTransactions", []] },
                   as: "t",
                   in: {
                     $cond: {
