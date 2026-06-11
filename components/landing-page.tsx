@@ -110,7 +110,7 @@ export default function ModernLandingPage({ onGetStarted }: LandingPageProps) {
                 </Button>
               </Link>
               <Button
-                onClick={onGetStarted}
+                onClick={() => onGetStarted?.()}
                 className="bg-gradient-to-r from-teal-500 to-emerald-400 hover:from-teal-600 hover:to-emerald-500 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
               >
                 Get Started
@@ -325,14 +325,14 @@ export default function ModernLandingPage({ onGetStarted }: LandingPageProps) {
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition-colors text-lg opacity-60 cursor-not-allowed">
+                  <span className="text-lg opacity-60 cursor-not-allowed transition-colors" aria-disabled="true">
                     Pricing (Coming Soon)
-                  </a>
+                  </span>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition-colors text-lg opacity-60 cursor-not-allowed">
+                  <span className="text-lg opacity-60 cursor-not-allowed transition-colors" aria-disabled="true">
                     API (Coming Soon)
-                  </a>
+                  </span>
                 </li>
               </ul>
             </div>
@@ -351,9 +351,9 @@ export default function ModernLandingPage({ onGetStarted }: LandingPageProps) {
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition-colors text-lg opacity-60 cursor-not-allowed">
+                  <span className="text-lg opacity-60 cursor-not-allowed transition-colors" aria-disabled="true">
                     Blog (Coming Soon)
-                  </a>
+                  </span>
                 </li>
               </ul>
             </div>
@@ -362,15 +362,15 @@ export default function ModernLandingPage({ onGetStarted }: LandingPageProps) {
           <div className="border-t border-gray-700 dark:border-gray-800 pt-8">
             <div className="flex flex-col md:flex-row justify-between items-center">
               <p className="text-gray-400 dark:text-gray-500 mb-4 md:mb-0 text-lg">
-                © 2026 EcoVerse. All rights reserved.
+                © {new Date().getFullYear()} EcoVerse. All rights reserved.
               </p>
               <div className="flex gap-8 text-gray-400 dark:text-gray-500">
-                <a href="#" className="hover:text-white transition-colors text-lg opacity-60 cursor-not-allowed">
+                <span className="text-lg opacity-60 cursor-not-allowed transition-colors" aria-disabled="true">
                   Privacy Policy
-                </a>
-                <a href="#" className="hover:text-white transition-colors text-lg opacity-60 cursor-not-allowed">
+                </span>
+                <span className="text-lg opacity-60 cursor-not-allowed transition-colors" aria-disabled="true">
                   Terms of Service
-                </a>
+                </span>
               </div>
             </div>
           </div>
