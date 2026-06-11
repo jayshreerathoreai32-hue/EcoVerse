@@ -26,7 +26,6 @@ type OpenFoodFactsResponse = {
 };
 
 export async function POST(req: Request) {
-  const { barcode } = await req.json()
   const userEmail = req.headers.get("x-user-email")
 
   if (!userEmail) {
@@ -35,6 +34,8 @@ export async function POST(req: Request) {
       { status: 401 }
     )
   }
+
+  const { barcode } = await req.json()
 
   if (!barcode) {
     return NextResponse.json({ error: "Barcode missing" }, { status: 400 })
