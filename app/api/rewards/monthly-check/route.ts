@@ -1,27 +1,29 @@
-import { NextResponse } from "next/server"
-import dbConnect from "@/lib/mongodb"
-import User from "@/models/User"
-import { calculateMonthlyBonus, POINT_REWARDS } from "@/lib/rewards-system"
+import { NextResponse } from 'next/server';
+import dbConnect from '@/lib/mongodb';
+import User from '@/models/User';
+import { calculateMonthlyBonus, POINT_REWARDS } from '@/lib/rewards-system';
 
 // POST /api/rewards/monthly-check - Check and award monthly bonuses
 export async function POST(req: Request) {
-  const email = req.headers.get("x-user-email")
+  const email = req.headers.get('x-user-email');
 
   if (!email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
-    await dbConnect()
-    const user = await User.findOne({ email }) as any
+    await dbConnect();
+    const user = (await User.findOne({ email })) as any;
 
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 })
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const currentDate = new Date()
-    const lastCheck = user.lastMonthlyBonusCheck ? new Date(user.lastMonthlyBonusCheck) : null
-    
+    const currentDate = new Date();
+    const lastCheck = user.lastMonthlyBonusCheck
+      ? new Date(user.lastMonthlyBonusCheck)
+      : null;
+
     // Check if we need to award monthly bonus
     const isSameMonthAndYear =
       !!lastCheck &&
@@ -29,13 +31,13 @@ export async function POST(req: Request) {
       lastCheck.getFullYear() === currentDate.getFullYear();
 
     if (!isSameMonthAndYear) {
-      const monthlyBonus = calculateMonthlyBonus(user)
-      
+      const monthlyBonus = calculateMonthlyBonus(user);
+
       if (monthlyBonus) {
         // Atomically award monthly bonus to prevent race conditions
         const bonusMonth = currentDate.getMonth();
         const bonusYear = currentDate.getFullYear();
-        const updatedUser = await User.findOneAndUpdate(
+        const updatedUser = (await User.findOneAndUpdate(
           {
             _id: user._id,
             $or: [
@@ -43,8 +45,13 @@ export async function POST(req: Request) {
               {
                 $expr: {
                   $or: [
-                    { $ne: [{ $month: "$lastMonthlyBonusCheck" }, bonusMonth + 1] },
-                    { $ne: [{ $year: "$lastMonthlyBonusCheck" }, bonusYear] },
+                    {
+                      $ne: [
+                        { $month: '$lastMonthlyBonusCheck' },
+                        bonusMonth + 1,
+                      ],
+                    },
+                    { $ne: [{ $year: '$lastMonthlyBonusCheck' }, bonusYear] },
                   ],
                 },
               },
@@ -70,15 +77,22 @@ export async function POST(req: Request) {
             $set: { lastMonthlyBonusCheck: currentDate },
           },
           { new: true }
-        ) as any;
+        )) as any;
 
         if (!updatedUser) {
           // Another request already awarded the bonus
-          return NextResponse.json({ bonusAwarded: false, message: "Monthly bonus already awarded" });
+          return NextResponse.json({
+            bonusAwarded: false,
+            message: 'Monthly bonus already awarded',
+          });
         }
 
-        const newRewardPoints = (updatedUser.confirmedPoints || 0) + (updatedUser.unconfirmedPoints || 0);
-        await User.findByIdAndUpdate(updatedUser._id, { $set: { rewardPoints: newRewardPoints } });
+        const newRewardPoints =
+          (updatedUser.confirmedPoints || 0) +
+          (updatedUser.unconfirmedPoints || 0);
+        await User.findByIdAndUpdate(updatedUser._id, {
+          $set: { rewardPoints: newRewardPoints },
+        });
 
         return NextResponse.json({
           bonusAwarded: true,
@@ -92,47 +106,53 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       bonusAwarded: false,
-      message: "No monthly bonus available"
-    })
-
+      message: 'No monthly bonus available',
+    });
   } catch (error) {
-    return NextResponse.json({ error: "Failed to check monthly bonus" }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Failed to check monthly bonus' },
+      { status: 500 }
+    );
   }
 }
 
 // GET /api/rewards/monthly-check - Get monthly bonus status
 export async function GET(req: Request) {
-  const email = req.headers.get("x-user-email")
+  const email = req.headers.get('x-user-email');
 
   if (!email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
-    await dbConnect()
-    const user = await User.findOne({ email }).lean() as any
+    await dbConnect();
+    const user = (await User.findOne({ email }).lean()) as any;
 
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 })
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const currentDate = new Date()
-    const lastCheck = user.lastMonthlyBonusCheck ? new Date(user.lastMonthlyBonusCheck) : null
+    const currentDate = new Date();
+    const lastCheck = user.lastMonthlyBonusCheck
+      ? new Date(user.lastMonthlyBonusCheck)
+      : null;
     const eligibleForBonus =
       !lastCheck ||
       lastCheck.getMonth() !== currentDate.getMonth() ||
-      lastCheck.getFullYear() !== currentDate.getFullYear()
-    
-    const monthlyBonus = calculateMonthlyBonus(user)
-    
+      lastCheck.getFullYear() !== currentDate.getFullYear();
+
+    const monthlyBonus = calculateMonthlyBonus(user);
+
     return NextResponse.json({
       eligibleForBonus,
       monthlyBonus,
       lastBonusCheck: user.lastMonthlyBonusCheck,
-      totalBonusesEarned: user.monthlyBonusesEarned || 0
-    })
-
+      totalBonusesEarned: user.monthlyBonusesEarned || 0,
+    });
   } catch (error) {
-    return NextResponse.json({ error: "Failed to get monthly bonus status" }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Failed to get monthly bonus status' },
+      { status: 500 }
+    );
   }
 }

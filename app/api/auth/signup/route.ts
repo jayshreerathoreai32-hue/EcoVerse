@@ -64,15 +64,13 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ user }, { status: 201 });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown server error';
+    const message =
+      error instanceof Error ? error.message : 'Unknown server error';
 
     // FIX: Safely wrap critical runtime tracing with explicit rule suppression
     /* eslint-disable-next-line no-console */
     console.error('🔥 Signup API error:', message);
 
-    return NextResponse.json(
-      { error: message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
