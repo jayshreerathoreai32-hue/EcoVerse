@@ -1,12 +1,12 @@
-// app/api/user/score/route.ts
-
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 import { calculateLevel, getSustainabilityTier } from '@/lib/rewards-system';
 
 export async function GET(req: Request) {
-  const email = req.headers.get('x-user-email');
+  // FIX: Look up identity from headers OR fall back to query strings (?email=...) for page contract compatibility
+  const { searchParams } = new URL(req.url);
+  const email = req.headers.get('x-user-email') ?? searchParams.get('email');
 
   if (!email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -27,20 +27,24 @@ export async function GET(req: Request) {
       user.totalScanned || 0
     );
 
+    // FIX: Extracted and normalized monthlyCarbon value to prevent ternary misclassification
+    const monthlyCarbon = user.monthlyCarbon || 0;
+    const sustainabilityLevel =
+      monthlyCarbon < 20
+        ? 'Excellent'
+        : monthlyCarbon < 35
+          ? 'Good'
+          : monthlyCarbon < 50
+            ? 'Average'
+            : 'Needs Improvement';
+
     return NextResponse.json({
-      monthlyCarbon: user.monthlyCarbon || 0,
+      monthlyCarbon,
       totalScanned: user.totalScanned || 0,
       streakCount: user.streakCount || 0,
       bestStreakCount: user.bestStreakCount || 0,
       scans: user.scans || [],
-      sustainabilityLevel:
-        user.monthlyCarbon < 20
-          ? 'Excellent'
-          : user.monthlyCarbon < 35
-            ? 'Good'
-            : user.monthlyCarbon < 50
-              ? 'Average'
-              : 'Needs Improvement',
+      sustainabilityLevel,
       // Enhanced rewards data
       rewards: {
         points: user.rewardPoints || 0,
@@ -70,6 +74,7 @@ export async function GET(req: Request) {
       },
     });
   } catch (error) {
+    /* eslint-disable-next-line no-console */
     console.error('Error fetching user data:', error);
     return NextResponse.json(
       { error: 'Failed to fetch user data' },
@@ -79,16 +84,18 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const email = req.headers.get('x-user-email');
+  // FIX: Read email identity gracefully using headers or fallback search parameter query strings
+  const { searchParams } = new URL(req.url);
+  const email = req.headers.get('x-user-email') ?? searchParams.get('email');
 
   if (!email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // productName and carbonEstimate reserved for future carbon tracking feature
-  await req.json();
-
   try {
+    // FIX: Moved request body parsing inside the try-catch block to gracefully capture malformed JSON payload variations
+    await req.json();
+
     await dbConnect();
     const user = await User.findOne({ email });
 
