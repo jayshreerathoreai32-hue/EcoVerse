@@ -3,6 +3,7 @@
 import * as React from 'react';
 
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 
 export const avatarImages = {
   'avatar-1': '/avatars/av1.jpg',
@@ -29,15 +30,17 @@ const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
       <div
         ref={ref}
         className={cn(
-          'h-10 w-10 rounded-full overflow-hidden border border-border',
+          'relative h-10 w-10 rounded-full overflow-hidden border border-border',
           className
         )}
         {...props}
       >
-        <img
+        <Image
           src={src}
-          alt="User avatar"
-          className="h-full w-full object-cover rounded-full"
+          alt='User avatar'
+          fill
+          sizes='40px'
+          className='object-cover rounded-full'
         />
       </div>
     );
