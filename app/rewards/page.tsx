@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, react/no-unescaped-entities, @typescript-eslint/no-require-imports, react-hooks/exhaustive-deps, @next/next/no-img-element, no-console */
 'use client';
 
 import { useAuth } from '@/components/auth-provider';
@@ -386,7 +385,7 @@ export default function RewardsPage() {
                       Active Features
                     </CardTitle>
                     <CardDescription className="text-gray-400">
-                      Special items and bonuses you've unlocked
+                      Special items and bonuses you&apos;ve unlocked
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -443,7 +442,7 @@ export default function RewardsPage() {
                 <CardHeader>
                   <CardTitle className="text-white">Active Badges</CardTitle>
                   <CardDescription className="text-gray-400">
-                    Badges you've earned and activated
+                    Badges you&apos;ve earned and activated
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -618,8 +617,8 @@ export default function RewardsPage() {
                           {!canAfford && wouldAffordWithUnconfirmed && (
                             <div className="mb-3 p-2 rounded bg-yellow-900/20 border border-yellow-700">
                               <p className="text-xs text-yellow-300">
-                                You'll have enough once unconfirmed points are
-                                confirmed (7 days)
+                                You&apos;ll have enough once unconfirmed points
+                                are confirmed (7 days)
                               </p>
                             </div>
                           )}
@@ -664,7 +663,7 @@ export default function RewardsPage() {
                 <CardHeader>
                   <CardTitle className="text-blue-900">Your Items</CardTitle>
                   <CardDescription className="text-gray-600">
-                    Items you've purchased from the reward shop
+                    Items you&apos;ve purchased from the reward shop
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
