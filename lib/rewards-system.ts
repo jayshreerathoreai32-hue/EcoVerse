@@ -374,7 +374,8 @@ export function calculateLevel(totalPoints: number): {
 // Check for new achievements
 export function checkAchievements(user: unknown): Achievement[] {
   const newAchievements: Achievement[] = [];
-  const earnedAchievementIds = user.achievements?.map((a: unknown) => a.id) || [];
+  const earnedAchievementIds =
+    user.achievements?.map((a: unknown) => a.id) || [];
 
   for (const achievement of ACHIEVEMENTS) {
     if (
