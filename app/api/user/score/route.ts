@@ -85,7 +85,7 @@ export async function GET(req: Request) {
       },
     });
   } catch (error) {
-    /* eslint-disable-next-line no-console */
+     
     console.error('Error fetching user data:', error);
 
     return NextResponse.json(
