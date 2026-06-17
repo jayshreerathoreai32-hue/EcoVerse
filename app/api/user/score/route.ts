@@ -20,7 +20,7 @@ export async function GET(req: Request) {
 
   try {
     await dbConnect();
-    const user = (await User.findOne({ email }).lean()) as any;
+    const user = await User.findOne({ email }).lean();
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
@@ -85,6 +85,7 @@ export async function GET(req: Request) {
       },
     });
   } catch (error) {
+    /* eslint-disable-next-line no-console */
     console.error('Error fetching user data:', error);
 
     return NextResponse.json(
@@ -106,11 +107,7 @@ export async function POST(req: Request) {
   try {
     const { productName, carbonEstimate } = await req.json();
 
-    if (
-      !productName ||
-      carbonEstimate === undefined ||
-      carbonEstimate === null
-    ) {
+    if (!productName || carbonEstimate === undefined || carbonEstimate === null) {
       return NextResponse.json(
         { error: 'Missing productName or carbonEstimate' },
         { status: 400 }
@@ -140,16 +137,20 @@ export async function POST(req: Request) {
     const now = new Date();
     let newStreakCount = user.streakCount || 0;
 
-    const lastScanDate = user.lastScanDate ? new Date(user.lastScanDate) : null;
+    const lastScanDate = user.lastScanDate
+      ? new Date(user.lastScanDate)
+      : null;
 
     const isSameDay =
-      lastScanDate && now.toDateString() === lastScanDate.toDateString();
+      lastScanDate &&
+      now.toDateString() === lastScanDate.toDateString();
 
     const yesterday = new Date(now);
     yesterday.setDate(now.getDate() - 1);
 
     const isYesterday =
-      lastScanDate && yesterday.toDateString() === lastScanDate.toDateString();
+      lastScanDate &&
+      yesterday.toDateString() === lastScanDate.toDateString();
 
     if (!lastScanDate || isYesterday) {
       newStreakCount += 1;
@@ -157,7 +158,10 @@ export async function POST(req: Request) {
       newStreakCount = 1;
     }
 
-    const newBestStreak = Math.max(newStreakCount, user.bestStreakCount || 0);
+    const newBestStreak = Math.max(
+      newStreakCount,
+      user.bestStreakCount || 0
+    );
 
     // Calculate points for this manual entry
     const pointsData = calculateScanPoints(
@@ -171,9 +175,11 @@ export async function POST(req: Request) {
     const isConfirmed = pointsData.isConfirmed;
 
     // Pre-calculate expected state for level and achievements
-    const newTotalPoints = (user.totalPointsEarned || 0) + pointsEarned;
+    const newTotalPoints =
+      (user.totalPointsEarned || 0) + pointsEarned;
 
-    const newTotalScanned = (user.totalScanned || 0) + 1;
+    const newTotalScanned =
+      (user.totalScanned || 0) + 1;
 
     const levelData = calculateLevel(newTotalPoints);
 
@@ -186,7 +192,8 @@ export async function POST(req: Request) {
       streakCount: newStreakCount,
     };
 
-    const earnedAchievements = checkAchievements(simulatedUser);
+    const earnedAchievements =
+      checkAchievements(simulatedUser);
 
     const oldLevel = user.level || 1;
 
