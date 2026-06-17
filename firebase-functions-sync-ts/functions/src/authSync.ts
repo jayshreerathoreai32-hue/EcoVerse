@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { onUserCreated, onUserDeleted } from "firebase-functions/v2/auth";
 import { connectToMongo } from "./utils/mongo";
 

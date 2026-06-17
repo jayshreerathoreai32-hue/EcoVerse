@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import * as admin from "firebase-admin";
 import * as dotenv from "dotenv";
 

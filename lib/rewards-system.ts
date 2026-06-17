@@ -35,9 +35,22 @@ export interface RewardUser {
   streakCount: number;
   monthlyCarbon: number;
   level: number;
-  scans?: { carbonEstimate: number }[];
+  scans?: {
+    carbonEstimate: number;
+    productName: string;
+    category: string;
+    confidence: number;
+    barcode: string;
+    date: Date;
+  }[];
   totalPointsEarned?: number;
-  achievements?: { id: string }[];
+  achievements?: {
+    id: string;
+    name: string;
+    description: string;
+    earnedAt: Date;
+    points: number;
+  }[];
   rewardTransactions?: RewardTransaction[];
   confirmedPoints?: number;
   unconfirmedPoints?: number;
@@ -70,7 +83,8 @@ export const POINT_REWARDS = {
 
 // Level system - points needed for each level
 export const LEVEL_THRESHOLDS = [
-  0, 100, 250, 500, 1000, 2000, 3500, 5500, 8000, 12000, 18000, 25000, 35000, 50000, 75000,
+  0, 100, 250, 500, 1000, 2000, 3500, 5500, 8000, 12000, 18000, 25000, 35000,
+  50000, 75000,
 ];
 
 // Reward shop items
@@ -78,7 +92,8 @@ export const REWARD_SHOP_ITEMS: RewardShopItem[] = [
   {
     id: 'eco_hero_badge',
     name: 'Eco Hero Badge',
-    description: 'Show your commitment to sustainability with this special badge',
+    description:
+      'Show your commitment to sustainability with this special badge',
     cost: 500,
     icon: '🎖️',
     category: 'badge',
@@ -270,7 +285,9 @@ export const ACHIEVEMENTS: Achievement[] = [
     id: 'early_adopter',
     name: 'Early Adopter',
     description: 'One of the first 100 users to join',
-    condition: () => false, // Placeholder
+    // TODO: Implement condition based on user creation timestamp or user ID range
+    // Should check: user.createdAt < LAUNCH_DATE + 30days || user.id <= 100
+    condition: () => false, // Disabled until user creation tracking is implemented
     points: 200,
     icon: '🏃',
   },
@@ -362,8 +379,7 @@ export function calculateLevel(totalPoints: number): {
 
 export function checkAchievements(user: RewardUser): Achievement[] {
   const newAchievements: Achievement[] = [];
-  const earnedAchievementIds =
-    user.achievements?.map((a) => a.id) || [];
+  const earnedAchievementIds = user.achievements?.map((a) => a.id) || [];
 
   for (const achievement of ACHIEVEMENTS) {
     if (
