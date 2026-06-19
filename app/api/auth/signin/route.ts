@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 import bcrypt from 'bcryptjs';
+import { setAuthCookie } from '@/lib/auth';
 
 export async function POST(req: Request) {
   try {
@@ -44,6 +45,11 @@ export async function POST(req: Request) {
         user.createdAt?.toISOString().split('T')[0] ||
         new Date().toISOString().split('T')[0],
     };
+
+    // Set the auth_token cookie so middleware can verify the session and
+    // inject x-user-email on subsequent requests, matching the behavior
+    // already implemented for Google Sign-In.
+    await setAuthCookie(user.email, user._id.toString());
 
     return NextResponse.json({ user: userData }, { status: 200 });
   } catch (error) {
