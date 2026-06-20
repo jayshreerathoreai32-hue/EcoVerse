@@ -153,12 +153,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return true;
       } else {
         console.warn('❌ Login failed:', data.error);
-        try { await signOut(auth); } catch {}
+        try {
+          await signOut(auth);
+        } catch {}
         return false;
       }
     } catch (err) {
       console.error('🔥 Login error:', err);
-      try { await signOut(auth); } catch {}
+      try {
+        await signOut(auth);
+      } catch {}
       return false;
     }
   };
@@ -193,12 +197,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return true;
       } else {
         console.error('❌ Failed to authenticate Google user');
-        try { await signOut(auth); } catch {}
+        try {
+          await signOut(auth);
+        } catch {}
         return false;
       }
     } catch (error) {
       console.error('🔥 Google sign-in error:', error);
-      try { await signOut(auth); } catch {}
+      try {
+        await signOut(auth);
+      } catch {}
       return false;
     }
   };

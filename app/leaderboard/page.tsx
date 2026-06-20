@@ -79,7 +79,6 @@ export default function LeaderboardPage() {
 
   useEffect(() => {
     fetchLeaderboardData();
-     
   }, []);
 
   useEffect(() => {

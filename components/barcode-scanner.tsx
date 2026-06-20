@@ -41,9 +41,12 @@ export default function BarcodeScanner({
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
 
-  const handleScan = useCallback((barcode: string) => {
-    onScan(barcode);
-  }, [onScan]);
+  const handleScan = useCallback(
+    (barcode: string) => {
+      onScan(barcode);
+    },
+    [onScan]
+  );
 
   const simulateScan = useCallback(async () => {
     if (videoRef.current) {
