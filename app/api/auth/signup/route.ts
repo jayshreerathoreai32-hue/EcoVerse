@@ -65,10 +65,10 @@ export async function POST(req: Request) {
     });
 
     // FIX: Convert document to a plain object and strip the password property to prevent credential leaking
-    const user = createdUser.toObject
+    const userObject = createdUser.toObject
       ? createdUser.toObject()
       : { ...createdUser };
-    delete user.password;
+    const { password: _password, ...user } = userObject;
 
     const token = await signToken({
       email: user.email,
