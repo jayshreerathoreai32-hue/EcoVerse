@@ -155,14 +155,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.warn('❌ Login failed:', data.error);
         try {
           await signOut(auth);
-        } catch {}
+        } catch {
+          // Ignore signOut errors
+        }
         return false;
       }
     } catch (err) {
       console.error('🔥 Login error:', err);
       try {
         await signOut(auth);
-      } catch {}
+      } catch {
+        // Ignore signOut errors
+      }
       return false;
     }
   };
@@ -199,14 +203,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error('❌ Failed to authenticate Google user');
         try {
           await signOut(auth);
-        } catch {}
+        } catch {
+          // Ignore signOut errors
+        }
         return false;
       }
     } catch (error) {
       console.error('🔥 Google sign-in error:', error);
       try {
         await signOut(auth);
-      } catch {}
+      } catch {
+        // Ignore signOut errors
+      }
       return false;
     }
   };
