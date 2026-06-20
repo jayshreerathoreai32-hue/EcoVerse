@@ -63,7 +63,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ user: userData }, { status: 200 });
   } catch (error) {
-    /* eslint-disable-next-line no-console */
     console.error('Signin error:', error);
 
     return NextResponse.json(
