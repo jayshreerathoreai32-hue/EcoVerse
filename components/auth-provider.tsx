@@ -11,6 +11,7 @@ import {
   signInWithPopup,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  signOut,
 } from 'firebase/auth';
 import { FirebaseError } from 'firebase/app';
 import { auth, googleProvider } from '@/lib/firebase';
@@ -90,6 +91,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (!response.ok) {
         console.error('❌ Signup failed:', data.error);
+        try {
+          await userCredential.user.delete();
+        } catch (deleteErr) {
+          console.error('Failed to rollback Firebase user:', deleteErr);
+        }
         return false;
       }
 
@@ -147,10 +153,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return true;
       } else {
         console.warn('❌ Login failed:', data.error);
+        try { await signOut(auth); } catch {}
         return false;
       }
     } catch (err) {
       console.error('🔥 Login error:', err);
+      try { await signOut(auth); } catch {}
       return false;
     }
   };
@@ -185,10 +193,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return true;
       } else {
         console.error('❌ Failed to authenticate Google user');
+        try { await signOut(auth); } catch {}
         return false;
       }
     } catch (error) {
       console.error('🔥 Google sign-in error:', error);
+      try { await signOut(auth); } catch {}
       return false;
     }
   };

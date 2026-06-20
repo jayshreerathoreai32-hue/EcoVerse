@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 import bcrypt from 'bcryptjs';
+import { setAuthCookie } from '@/lib/auth';
 
 export async function POST(req: Request) {
   try {
@@ -44,6 +45,8 @@ export async function POST(req: Request) {
         user.createdAt?.toISOString().split('T')[0] ||
         new Date().toISOString().split('T')[0],
     };
+
+    await setAuthCookie(user.email, user._id.toString());
 
     return NextResponse.json({ user: userData }, { status: 200 });
   } catch (error) {
