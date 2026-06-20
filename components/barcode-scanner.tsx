@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -26,6 +26,9 @@ interface BarcodeScannerProps {
   onClose: () => void;
 }
 
+// Instantiate the reader outside the component to prevent recreation on every render pass
+const codeReader = new BrowserMultiFormatReader();
+
 export default function BarcodeScanner({
   onScan,
   onClose,
@@ -38,86 +41,11 @@ export default function BarcodeScanner({
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
 
-  const codeReader = new BrowserMultiFormatReader();
-
-  useEffect(() => {
-    startCamera();
-    return () => stopCamera();
-  }, [facingMode]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      simulateScan();
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [stream]);
-
-  const startCamera = async () => {
-    try {
-      const constraints = {
-        video: {
-          facingMode,
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-        },
-      };
-
-      const mediaStream =
-        await navigator.mediaDevices.getUserMedia(constraints);
-      setStream(mediaStream);
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-        videoRef.current.play();
-      }
-    } catch (error) {
-      toast({
-        title: 'Camera access denied',
-        description: 'Please allow camera access to scan barcodes.',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const stopCamera = () => {
-    if (stream) {
-      stream.getTracks().forEach((track) => track.stop());
-      setStream(null);
-    }
-  };
-
-  const toggleFlash = async () => {
-    if (stream) {
-      const track = stream.getVideoTracks()[0];
-      const capabilities = track.getCapabilities() as TorchCapabilities;
-
-      if (capabilities.torch) {
-        try {
-          await track.applyConstraints({
-            advanced: [{ torch: !isFlashOn } as TorchConstraintSet],
-          });
-          setIsFlashOn(!isFlashOn);
-        } catch (error) {
-          toast({
-            title: 'Flash not available',
-            description: "Your device doesn't support camera flash.",
-            variant: 'destructive',
-          });
-        }
-      }
-    }
-  };
-
-  const switchCamera = () => {
-    setFacingMode(facingMode === 'user' ? 'environment' : 'user');
-  };
-
-  const handleScan = (barcode: string) => {
+  const handleScan = useCallback((barcode: string) => {
     onScan(barcode);
-  };
+  }, [onScan]);
 
-  const simulateScan = async () => {
+  const simulateScan = useCallback(async () => {
     if (videoRef.current) {
       try {
         const result = await codeReader.decodeOnceFromVideoElement(
@@ -138,6 +66,81 @@ export default function BarcodeScanner({
         }
       }
     }
+  }, [handleScan, toast]);
+
+  const startCamera = useCallback(async () => {
+    try {
+      const constraints = {
+        video: {
+          facingMode,
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
+      };
+
+      const mediaStream =
+        await navigator.mediaDevices.getUserMedia(constraints);
+      setStream(mediaStream);
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+        videoRef.current.play();
+      }
+    } catch {
+      toast({
+        title: 'Camera access denied',
+        description: 'Please allow camera access to scan barcodes.',
+        variant: 'destructive',
+      });
+    }
+  }, [facingMode, toast]);
+
+  const stopCamera = useCallback(() => {
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+      setStream(null);
+    }
+  }, [stream]);
+
+  // Hook 1: Handle camera configuration setup/teardown cycles
+  useEffect(() => {
+    startCamera();
+    return () => stopCamera();
+  }, [facingMode, startCamera, stopCamera]);
+
+  // Hook 2: Manage barcode scan lookup intervals
+  useEffect(() => {
+    const interval = setInterval(() => {
+      simulateScan();
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [stream, simulateScan]);
+
+  const toggleFlash = async () => {
+    if (stream) {
+      const track = stream.getVideoTracks()[0];
+      const capabilities = track.getCapabilities() as TorchCapabilities;
+
+      if (capabilities.torch) {
+        try {
+          await track.applyConstraints({
+            advanced: [{ torch: !isFlashOn } as TorchConstraintSet],
+          });
+          setIsFlashOn(!isFlashOn);
+        } catch {
+          toast({
+            title: 'Flash not available',
+            description: "Your device doesn't support camera flash.",
+            variant: 'destructive',
+          });
+        }
+      }
+    }
+  };
+
+  const switchCamera = () => {
+    setFacingMode((prev) => (prev === 'user' ? 'environment' : 'user'));
   };
 
   const enterBarcodeManually = () => {

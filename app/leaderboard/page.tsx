@@ -79,7 +79,7 @@ export default function LeaderboardPage() {
 
   useEffect(() => {
     fetchLeaderboardData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   useEffect(() => {

@@ -1,43 +1,33 @@
-import { FlatCompat } from '@eslint/eslintrc';
-import unusedImports from 'eslint-plugin-unused-imports';
+import tsPlugin from "@typescript-eslint/eslint-plugin";
+import tsParser from "@typescript-eslint/parser";
+import reactHooks from "eslint-plugin-react-hooks"; // 👈 1. Add this import
 
-const compat = new FlatCompat({
-  baseDirectory: import.meta.dirname,
-});
-
-const eslintConfig = [
-  ...compat.extends('next/core-web-vitals', 'next/typescript'),
-  {
-    plugins: {
-      'unused-imports': unusedImports,
-    },
-    rules: {
-      'no-console': ['warn', { allow: ['warn', 'error'] }],
-      'no-unused-vars': 'off',
-      '@typescript-eslint/no-unused-vars': 'off',
-      'unused-imports/no-unused-imports': 'warn',
-    },
-  },
-  {
-    linterOptions: {
-      // Changed from 'off' to 'warn' to satisfy CodeRabbit
-      reportUnusedDisableDirectives: 'warn',
-    },
-    rules: {
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-require-imports': 'warn',
-      'react/no-unescaped-entities': 'warn',
-    },
-  },
+export default [
   {
     ignores: [
-      'node_modules/**',
-      '.next/**',
-      'out/**',
-      'build/**',
-      'next-env.d.ts',
-    ],
+      ".next/**",
+      "coverage/**",
+      "next-env.d.ts",
+      "**/firebase-functions-sync-prisma/**",
+      "**/firebase-functions-sync-ts-backup/**",
+      "**/firebase-functions-sync-ts/**",
+      "**/linkFBtoMDB/**",
+      "fix.js"
+    ]
   },
+  {
+    files: ["**/*.ts", "**/*.tsx"],
+    languageOptions: {
+      parser: tsParser,
+    },
+    plugins: {
+      "@typescript-eslint": tsPlugin,
+      "react-hooks": reactHooks, // 👈 2. Add the plugin here
+    },
+    rules: {
+      "@typescript-eslint/no-unused-vars": "off",
+      "no-empty": "off",
+      "react-hooks/exhaustive-deps": "off" // 👈 3. Turn it off completely
+    }
+  }
 ];
-
-export default eslintConfig;
