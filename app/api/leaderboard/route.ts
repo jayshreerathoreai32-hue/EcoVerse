@@ -43,6 +43,7 @@ export async function GET() {
       return {
         id: user._id.toString(),
         name: user.name,
+        avatarId: user.avatarId || 'avatar-1',
         monthlyCarbon: user.monthlyCarbon || 0,
         totalScanned: user.totalScanned || 0,
         rank: index + 1,

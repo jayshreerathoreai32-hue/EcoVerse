@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/components/auth-provider';
 import DashboardLayout from '@/components/dashboard-layout';
+import { Avatar } from '@/components/ui/avatar';
 import {
   Card,
   CardContent,
@@ -30,6 +31,7 @@ import {
 interface LeaderboardUser {
   id: string;
   name: string;
+  avatarId?: string;
   monthlyCarbon: number;
   totalScanned: number;
   rank: number;
@@ -212,6 +214,10 @@ export default function LeaderboardPage() {
                     <div className="flex items-center gap-4">
                       {getRankIcon(currentUserData.rank)}
                       <div>
+                        <Avatar
+                          avatarId={currentUserData.avatarId as any}
+                          className="h-10 w-10"
+                        />
                         <div className="text-lg font-bold text-green-900">
                           Rank #{currentUserData.rank}
                         </div>
@@ -315,6 +321,10 @@ export default function LeaderboardPage() {
                           <div className="flex items-center justify-center w-10">
                             {getRankIcon(userEntry.rank)}
                           </div>
+                          <Avatar
+                            avatarId={userEntry.avatarId as any}
+                            className="h-10 w-10"
+                          />
                           <div>
                             <div className="font-medium text-white flex items-center gap-2">
                               {isCurrentUser ? 'You' : userEntry.name}

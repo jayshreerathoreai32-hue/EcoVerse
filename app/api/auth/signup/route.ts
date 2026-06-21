@@ -4,7 +4,6 @@ import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 import bcrypt from 'bcryptjs';
 import { signToken } from '@/lib/auth';
-
 import { setAuthCookie } from '@/lib/auth';
 
 export async function POST(req: Request) {
