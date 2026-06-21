@@ -318,7 +318,9 @@ export default function LeaderboardPage() {
                             {getRankIcon(userEntry.rank)}
                           </div>
                           <Avatar
-                            avatarId={(userEntry.avatarId ?? 'avatar-1') as AvatarId}
+                            avatarId={
+                              (userEntry.avatarId ?? 'avatar-1') as AvatarId
+                            }
                             className="h-10 w-10"
                           />
                           <div>
