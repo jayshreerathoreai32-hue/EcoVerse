@@ -9,7 +9,7 @@ import {
   getUserPointsSummary,
   POINT_REWARDS,
   POINT_CONFIRMATION,
-  UserPointsData,
+  RewardUser,
 } from '../rewards-system';
 
 describe('Rewards System', () => {
@@ -88,7 +88,7 @@ describe('Rewards System', () => {
 
   describe('checkAchievements', () => {
     it('should award first scan achievement', () => {
-      const user: UserPointsData = {
+      const user: RewardUser = {
         totalScanned: 1,
         achievements: [],
       };
@@ -98,7 +98,7 @@ describe('Rewards System', () => {
     });
 
     it('should not award previously earned achievements', () => {
-      const user: UserPointsData = {
+      const user: RewardUser = {
         totalScanned: 10,
         achievements: [
           {
@@ -117,7 +117,7 @@ describe('Rewards System', () => {
     });
 
     it('should award complex achievements like Eco Warrior', () => {
-      const user: UserPointsData = {
+      const user: RewardUser = {
         totalScanned: 15,
         monthlyCarbon: 15, // Under 20kg
         achievements: [],
@@ -191,7 +191,7 @@ describe('Rewards System', () => {
       const pastDate = new Date();
       pastDate.setDate(pastDate.getDate() - 8); // 8 days ago
 
-      const user: UserPointsData = {
+      const user: RewardUser = {
         rewardTransactions: [
           {
             type: 'earned',
@@ -214,7 +214,7 @@ describe('Rewards System', () => {
       const recentDate = new Date();
       recentDate.setDate(recentDate.getDate() - 1); // 1 day ago
 
-      const user: UserPointsData = {
+      const user: RewardUser = {
         rewardTransactions: [
           {
             type: 'earned',
@@ -245,7 +245,7 @@ describe('Rewards System', () => {
           (POINT_CONFIRMATION.CONFIRMATION_DELAY_HOURS - 12)
       ); // Will be confirmed in 12 hours
 
-      const user: UserPointsData = {
+      const user: RewardUser = {
         confirmedPoints: 500,
         unconfirmedPoints: 200,
         rewardTransactions: [
