@@ -35,7 +35,7 @@ export interface Achievement {
 }
 
 export interface RewardTransaction {
-  _id?: any;
+  _id?: string;
   type: 'earned' | 'redeemed' | string;
   points: number;
   pointsType: 'confirmed' | 'unconfirmed' | string;
@@ -420,8 +420,8 @@ export function calculateLevel(totalPoints: number): {
     level >= LEVEL_THRESHOLDS.length
       ? 100 // Max level reached
       : ((totalPoints - currentLevelPoints) /
-          (nextLevelPoints - currentLevelPoints)) *
-        100;
+        (nextLevelPoints - currentLevelPoints)) *
+      100;
 
   return {
     level,

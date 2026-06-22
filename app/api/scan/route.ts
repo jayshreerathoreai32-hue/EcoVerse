@@ -76,9 +76,9 @@ export async function POST(req: Request) {
 
       const isFirstScan = (user.totalScanned ?? 0) === 0;
       const totalScans = user.totalScanned ?? 0;
-      
+
       const currentScanDate = new Date();
-      
+
       const streakResult = processStreak(
         {
           lastScanDate: user.lastScanDate,
@@ -93,23 +93,23 @@ export async function POST(req: Request) {
       // Only apply streak bonus and daily scan base points if it's the first scan of the day
       const pointsData = calculateScanPoints
         ? calculateScanPoints(
-            carbonEstimate,
-            isFirstScan,
-            streakResult.streakCount,
-            totalScans,
-            streakResult.isFirstScanOfDay
-          )
+          carbonEstimate,
+          isFirstScan,
+          streakResult.streakCount,
+          totalScans,
+          streakResult.isFirstScanOfDay
+        )
         : { points: 0, reasons: [], isConfirmed: false };
 
       const isConfirmed = pointsData.isConfirmed;
       const pointsEarned = pointsData.points;
 
       // Prepare atomic updates
-      const setUpdate: any = {
+      const setUpdate: Record<string, unknown> = {
         streakCount: streakResult.streakCount,
         bestStreakCount: streakResult.bestStreakCount
       };
-      
+
       if (streakResult.lastScanDate) {
         setUpdate.lastScanDate = streakResult.lastScanDate;
       }
@@ -229,7 +229,7 @@ export async function POST(req: Request) {
               : updatedUser.monthlyCarbon < 20 && updatedUser.totalScanned >= 10
                 ? 'Gold'
                 : updatedUser.monthlyCarbon < 30 &&
-                    updatedUser.totalScanned >= 5
+                  updatedUser.totalScanned >= 5
                   ? 'Silver'
                   : updatedUser.monthlyCarbon < 40
                     ? 'Bronze'
@@ -241,10 +241,10 @@ export async function POST(req: Request) {
 
             return confirmationData.confirmedPoints > 0
               ? {
-                  pointsConfirmed: confirmationData.confirmedPoints,
-                  transactionsConfirmed:
-                    confirmationData.confirmedTransactions.length,
-                }
+                pointsConfirmed: confirmationData.confirmedPoints,
+                transactionsConfirmed:
+                  confirmationData.confirmedTransactions.length,
+              }
               : null;
           })(),
         },

@@ -176,7 +176,7 @@ export default function ScanPage() {
           }, (streakProtected ? 3000 : 1500) + (milestone ? 1500 : 0) + 500);
         }
         if (newAchievements?.length) {
-          newAchievements.forEach((achievement: unknown, index: number) => {
+          newAchievements.forEach((achievement: any, index: number) => {
             setTimeout(
               () => {
                 showNotification({

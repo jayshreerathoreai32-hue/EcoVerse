@@ -101,7 +101,7 @@ export async function GET(req: Request) {
       },
     });
   } catch (error) {
-    /* eslint-disable-next-line no-console */
+     
     console.error('Error debugging points:', error);
     return NextResponse.json(
       { error: 'Failed to debug points' },
@@ -200,7 +200,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error) {
-    /* eslint-disable-next-line no-console */
+     
     console.error('Error in debug action:', error);
     return NextResponse.json(
       { error: 'Failed to perform debug action' },

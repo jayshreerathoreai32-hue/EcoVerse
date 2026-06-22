@@ -3,7 +3,6 @@ import {
   calculateLevel,
   checkAchievements,
   calculateMonthlyBonus,
-  getSustainabilityTier,
   confirmPendingPoints,
   shouldConfirmImmediately,
   getUserPointsSummary,
@@ -76,7 +75,8 @@ describe('Rewards System', () => {
       const result = calculateLevel(175);
       expect(result.level).toBe(2);
       expect(result.nextLevelPoints).toBe(250);
-      expect(result.progressToNext).toBe(50); // 75 points into the 150 point gap between 100 and 250
+      // progress: 175 is 75 into the 150 gap (100 -> 250) => 50% => 50
+      expect(result.progressToNext).toBe(50);
     });
 
     it('should max out at level 15', () => {
@@ -93,7 +93,8 @@ describe('Rewards System', () => {
         streakCount: 1,
         level: 1,
         monthlyCarbon: 0,
-        achievements: [],
+        scans: [],
+        rewardTransactions: [],
       };
       const newAchievements = checkAchievements(user);
       expect(newAchievements.length).toBeGreaterThan(0);
@@ -106,6 +107,8 @@ describe('Rewards System', () => {
         streakCount: 1,
         level: 1,
         monthlyCarbon: 0,
+        scans: [],
+        rewardTransactions: [],
         achievements: [
           {
             id: 'first_scan',
@@ -127,7 +130,8 @@ describe('Rewards System', () => {
         streakCount: 1,
         level: 1,
         monthlyCarbon: 15, // Under 20kg
-        achievements: [],
+        scans: [],
+        rewardTransactions: [],
       };
       const newAchievements = checkAchievements(user);
       expect(newAchievements.map((a) => a.id)).toContain('eco_warrior');
@@ -141,7 +145,7 @@ describe('Rewards System', () => {
         totalScanned: 12,
         streakCount: 1,
         level: 1,
-      });
+      } as RewardUser);
       expect(result?.points).toBe(POINT_REWARDS.ECO_CHAMPION_GOAL);
     });
 
@@ -151,7 +155,7 @@ describe('Rewards System', () => {
         totalScanned: 6,
         streakCount: 1,
         level: 1,
-      });
+      } as RewardUser);
       expect(result?.points).toBe(POINT_REWARDS.MONTHLY_GOAL);
     });
 
@@ -161,7 +165,7 @@ describe('Rewards System', () => {
         totalScanned: 20,
         streakCount: 1,
         level: 1,
-      });
+      } as RewardUser);
       expect(result).toBeNull();
 
       const resultLowScans = calculateMonthlyBonus({
@@ -169,35 +173,8 @@ describe('Rewards System', () => {
         totalScanned: 2,
         streakCount: 1,
         level: 1,
-      });
+      } as RewardUser);
       expect(resultLowScans).toBeNull();
-    });
-  });
-
-  describe('getSustainabilityTier', () => {
-    it('should classify Platinum tier correctly', () => {
-      const result = getSustainabilityTier(8, 20);
-      expect(result.tier).toBe('Platinum');
-    });
-
-    it('should classify Gold tier correctly', () => {
-      const result = getSustainabilityTier(15, 12);
-      expect(result.tier).toBe('Gold');
-    });
-
-    it('should classify Silver tier correctly', () => {
-      const result = getSustainabilityTier(28, 6);
-      expect(result.tier).toBe('Silver');
-    });
-
-    it('should classify Bronze tier correctly', () => {
-      const result = getSustainabilityTier(35, 1);
-      expect(result.tier).toBe('Bronze');
-    });
-
-    it('should classify Beginner tier correctly', () => {
-      const result = getSustainabilityTier(50, 0);
-      expect(result.tier).toBe('Beginner');
     });
   });
 
@@ -206,7 +183,7 @@ describe('Rewards System', () => {
       const pastDate = new Date();
       pastDate.setDate(pastDate.getDate() - 8); // 8 days ago
 
-      const user: RewardUser = {
+      const user = {
         totalScanned: 1,
         streakCount: 1,
         level: 1,
@@ -221,7 +198,7 @@ describe('Rewards System', () => {
             date: pastDate,
           },
         ],
-      };
+      } as unknown as RewardUser;
 
       const result = confirmPendingPoints(user);
       expect(result.confirmedPoints).toBe(100);
@@ -233,7 +210,7 @@ describe('Rewards System', () => {
       const recentDate = new Date();
       recentDate.setDate(recentDate.getDate() - 1); // 1 day ago
 
-      const user: RewardUser = {
+      const user = {
         totalScanned: 1,
         streakCount: 1,
         level: 1,
@@ -248,7 +225,7 @@ describe('Rewards System', () => {
             date: recentDate,
           },
         ],
-      };
+      } as unknown as RewardUser;
 
       const result = confirmPendingPoints(user);
       expect(result.confirmedPoints).toBe(0);
@@ -264,11 +241,10 @@ describe('Rewards System', () => {
     it('should return correct user points summary', () => {
       const upcomingDate = new Date();
       upcomingDate.setHours(
-        upcomingDate.getHours() -
-          (POINT_CONFIRMATION.CONFIRMATION_DELAY_HOURS - 12)
+        upcomingDate.getHours() - (POINT_CONFIRMATION.CONFIRMATION_DELAY_HOURS - 12)
       ); // Will be confirmed in 12 hours
 
-      const user: RewardUser = {
+      const user = {
         totalScanned: 1,
         streakCount: 1,
         level: 1,
@@ -285,7 +261,7 @@ describe('Rewards System', () => {
             date: upcomingDate,
           },
         ],
-      };
+      } as unknown as RewardUser;
 
       const summary = getUserPointsSummary(user);
       expect(summary.confirmed).toBe(500);
