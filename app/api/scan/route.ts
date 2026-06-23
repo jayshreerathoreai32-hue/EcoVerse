@@ -11,6 +11,7 @@ import {
   calculateMonthlyBonus,
   confirmPendingPoints,
   getUserPointsSummary,
+  calculateStreakUpdate,
 } from '@/lib/rewards-system';
 import { inferPackaging } from '@/lib/packaging-inference';
 
@@ -71,8 +72,15 @@ export async function POST(req: Request) {
       }
 
       const isFirstScan = (user.totalScanned ?? 0) === 0;
-      const streakCount = user.streakCount ?? 0;
       const totalScans = user.totalScanned ?? 0;
+
+      const streakUpdate = calculateStreakUpdate(
+        user.lastScanDate,
+        user.streakCount ?? 0,
+        user.bestStreakCount ?? 0,
+        user.streakProtectors ?? 0
+      );
+      const streakCount = streakUpdate.streakCount;
 
       const pointsData = calculateScanPoints
         ? calculateScanPoints(
@@ -85,6 +93,8 @@ export async function POST(req: Request) {
 
       const isConfirmed = pointsData.isConfirmed;
       const pointsEarned = pointsData.points;
+
+      const scanTimestamp = new Date();
 
       // --- ATOMIC DATABASE UPDATE ---
       // We perform the atomic increment to update points and scans first.
@@ -99,6 +109,12 @@ export async function POST(req: Request) {
             totalPointsEarned: pointsEarned,
             confirmedPoints: isConfirmed ? pointsEarned : 0,
             unconfirmedPoints: isConfirmed ? 0 : pointsEarned,
+            streakProtectors: -streakUpdate.streakProtectorsUsed,
+          },
+          $set: {
+            streakCount: streakUpdate.streakCount,
+            bestStreakCount: streakUpdate.bestStreakCount,
+            lastScanDate: scanTimestamp,
           },
           $push: {
             scans: {
@@ -107,7 +123,7 @@ export async function POST(req: Request) {
               category: carbonData.category,
               confidence: carbonData.confidence,
               barcode: barcode,
-              date: new Date(),
+              date: scanTimestamp,
             },
             rewardTransactions: {
               _id: new mongoose.Types.ObjectId(),
@@ -117,7 +133,7 @@ export async function POST(req: Request) {
               reason: 'scan',
               description: `Scanned ${product.product_name}`,
               barcode: barcode,
-              date: new Date(),
+              date: scanTimestamp,
             },
           },
         },
@@ -150,20 +166,47 @@ export async function POST(req: Request) {
       // Persist any changed level/achievements with a subsequent update.
       let updatedUser = initialUpdate;
       if (levelData.level > oldLevel || earnedAchievements.length > 0) {
-        updatedUser =
-          (await User.findOneAndUpdate(
-            { email: userEmail },
-            {
-              $set: {
-                level: levelData.level,
-                updatedAt: new Date(),
-              },
-              $push: {
-                achievements: { $each: earnedAchievements },
-              },
+        const earnedIds = earnedAchievements.map((a) => a.id);
+
+        // Guard against a race between concurrent scan requests: if another
+        // request already pushed one of these achievement IDs between our
+        // read and this write, the filter below won't match, and this
+        // update becomes a no-op (findOneAndUpdate returns null) instead of
+        // inserting duplicate achievement records.
+        const filter: {
+          email: string;
+          achievements?: { $not: { $elemMatch: { id: { $in: string[] } } } };
+        } = { email: userEmail };
+
+        if (earnedIds.length > 0) {
+          filter.achievements = {
+            $not: { $elemMatch: { id: { $in: earnedIds } } },
+          };
+        }
+
+        const secondUpdate = await User.findOneAndUpdate(
+          filter,
+          {
+            $set: {
+              level: levelData.level,
+              updatedAt: new Date(),
             },
-            { new: true }
-          )) || initialUpdate;
+            $push: {
+              achievements: { $each: earnedAchievements },
+            },
+          },
+          { new: true }
+        );
+
+        // If the filter didn't match (a concurrent request already wrote
+        // one of these achievements), re-fetch the current document instead
+        // of silently keeping the stale initialUpdate snapshot — the level
+        // change still needs to be reflected even if the achievement push
+        // was skipped here.
+        updatedUser =
+          secondUpdate ||
+          (await User.findOne({ email: userEmail })) ||
+          initialUpdate;
       }
 
       // We use the ground-truth data from 'updatedUser' for the final response.
@@ -188,6 +231,9 @@ export async function POST(req: Request) {
           leveledUp: updatedUser.level > oldLevel,
           newAchievements: earnedAchievements,
           streakCount: updatedUser.streakCount,
+          bestStreakCount: updatedUser.bestStreakCount,
+          streakProtectorUsed: streakUpdate.streakProtectorsUsed > 0,
+          streakBroken: streakUpdate.streakBroken,
           monthlyBonus,
           sustainabilityTier:
             updatedUser.monthlyCarbon < 10 && updatedUser.totalScanned >= 15
