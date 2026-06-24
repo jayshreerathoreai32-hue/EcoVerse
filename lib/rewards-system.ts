@@ -220,7 +220,9 @@ export const ACHIEVEMENTS: Achievement[] = [
     name: 'Eco Warrior',
     description: 'Keep monthly carbon footprint under 20kg',
     condition: (user) =>
-      (user.monthlyCarbon ?? 0) < 20 && (user.totalScanned ?? 0) >= 10,
+      user.monthlyCarbon != null &&
+      user.monthlyCarbon < 20 &&
+      (user.totalScanned ?? 0) >= 10,
     points: 300,
     icon: '🌱',
   },
@@ -229,7 +231,9 @@ export const ACHIEVEMENTS: Achievement[] = [
     name: 'Carbon Conscious',
     description: 'Keep monthly carbon footprint under 30kg',
     condition: (user) =>
-      (user.monthlyCarbon ?? 0) < 30 && (user.totalScanned ?? 0) >= 5,
+      user.monthlyCarbon != null &&
+      user.monthlyCarbon < 30 &&
+      (user.totalScanned ?? 0) >= 5,
     points: 150,
     icon: '🌿',
   },
@@ -238,7 +242,9 @@ export const ACHIEVEMENTS: Achievement[] = [
     name: 'Zero Waste Hero',
     description: 'Keep monthly carbon footprint under 10kg',
     condition: (user) =>
-      (user.monthlyCarbon ?? 0) < 10 && (user.totalScanned ?? 0) >= 15,
+      user.monthlyCarbon != null &&
+      user.monthlyCarbon < 10 &&
+      (user.totalScanned ?? 0) >= 15,
     points: 500,
     icon: '🌍',
   },
@@ -402,12 +408,20 @@ export function checkAchievements(user: RewardUser): Achievement[] {
 export function calculateMonthlyBonus(
   user: RewardUser
 ): { points: number; reason: string } | null {
-  if ((user.monthlyCarbon ?? 0) < 20 && (user.totalScanned ?? 0) >= 10) {
+  if (
+    user.monthlyCarbon != null &&
+    user.monthlyCarbon < 20 &&
+    (user.totalScanned ?? 0) >= 10
+  ) {
     return {
       points: POINT_REWARDS.ECO_CHAMPION_GOAL,
       reason: 'Eco Champion - Monthly carbon under 20kg',
     };
-  } else if ((user.monthlyCarbon ?? 0) < 30 && (user.totalScanned ?? 0) >= 5) {
+  } else if (
+    user.monthlyCarbon != null &&
+    user.monthlyCarbon < 30 &&
+    (user.totalScanned ?? 0) >= 5
+  ) {
     return {
       points: POINT_REWARDS.MONTHLY_GOAL,
       reason: 'Monthly Goal - Carbon under 30kg',
