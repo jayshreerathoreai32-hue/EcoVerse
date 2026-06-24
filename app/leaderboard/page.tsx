@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, type AvatarId } from '@/components/ui/avatar';
 import {
   Trophy,
   Medal,
@@ -322,7 +323,7 @@ export default function LeaderboardPage() {
                             {getRankIcon(userEntry.rank)}
                           </div>
                           <Avatar
-                            avatarId={userEntry.avatarId}
+                            avatarId={userEntry.avatarId ?? 'avatar-1'}
                             className="h-10 w-10"
                           />
                           <div>
