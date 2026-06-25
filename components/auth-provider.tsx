@@ -37,7 +37,7 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<boolean>;
   logout: () => Promise<void>;
   updateUserStats: (carbonAdded: number) => void;
-  updateAvatar: (avatarId: AvatarId) => void;
+  updateAvatar: (avatarId: AvatarId) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -238,28 +238,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const updateAvatar = async (avatarId: AvatarId) => {
-    if (user) {
-      const previousUser = { ...user };
+  const updateAvatar = async (avatarId: AvatarId): Promise<boolean> => {
+    if (!user) return false;
 
-      setUser({
-        ...user,
-        avatarId,
+    const previousUser = { ...user };
+
+    setUser({
+      ...user,
+      avatarId,
+    });
+
+    try {
+      const res = await fetch('/api/user/avatar', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.email, avatarId }),
       });
 
-      try {
-        const res = await fetch('/api/user/avatar', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: user.email, avatarId }),
-        });
-
-        if (!res.ok) throw new Error('Failed to update on server');
-      } catch (err) {
-        console.error('Failed to update avatar on server:', err);
-        // Rollback optimistic UI
-        setUser(previousUser);
-      }
+      if (!res.ok) throw new Error('Failed to update on server');
+      return true;
+    } catch (err) {
+      console.error('Failed to update avatar on server:', err);
+      // Rollback optimistic UI
+      setUser(previousUser);
+      toast({
+        title: 'Avatar not saved',
+        description: 'Something went wrong. Please try again.',
+        variant: 'destructive',
+      });
+      return false;
     }
   };
 

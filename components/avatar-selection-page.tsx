@@ -26,8 +26,13 @@ export default function AvatarSelectionPage() {
 
   const handleSave = async () => {
     if (selected) {
-      await updateAvatar(selected); // ✅ update context + backend
-      router.push('/dashboard'); // ✅ redirect to dashboard (soft)
+      const success = await updateAvatar(selected);
+      if (success) {
+        router.push('/dashboard');
+      }
+      // On failure, updateAvatar already shows an error toast and rolls
+      // back the optimistic UI update — stay on this page so the user can
+      // retry instead of being redirected as though the save succeeded.
     }
   };
 
