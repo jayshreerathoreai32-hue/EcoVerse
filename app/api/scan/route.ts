@@ -10,6 +10,7 @@ import {
   checkAchievements,
   calculateMonthlyBonus,
   confirmPendingPoints,
+  confirmAgedPoints,
   getUserPointsSummary,
   calculateStreakUpdate,
   shouldConfirmImmediately,
@@ -189,6 +190,10 @@ export async function POST(req: Request) {
           { status: 409 }
         );
       }
+
+      // --- PENDING POINT CONFIRMATIONS ---
+      // Confirm any aged unconfirmed points before computing the response
+      await confirmAgedPoints(userEmail);
 
       // --- POST-UPDATE DERIVED CALCULATIONS ---
       // Achievements are checked first, since their points must be credited

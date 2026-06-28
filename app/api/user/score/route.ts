@@ -7,6 +7,7 @@ import {
   getSustainabilityTier,
   calculateScanPoints,
   checkAchievements,
+  confirmAgedPoints,
 } from '@/lib/rewards-system';
 
 export async function GET(req: Request) {
@@ -203,6 +204,9 @@ export async function POST(req: Request) {
     const earnedAchievements = checkAchievements(simulatedUser);
 
     const oldLevel = user.level || 1;
+
+    // Confirm any aged unconfirmed points before recording new scan
+    await confirmAgedPoints(email);
 
     // Single atomic update to user stats and history
     const finalUpdate = await User.findOneAndUpdate(
