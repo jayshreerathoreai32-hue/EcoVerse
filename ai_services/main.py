@@ -28,7 +28,6 @@ class AnalyticsRequest(BaseModel):
     scans: List[ScanItem] = Field(min_length=1, max_length=5000)
 
 class UserRecord(BaseModel):
-    # FIX 1A: Ensure user_id cannot be an empty string
     user_id: str = Field(min_length=1)
     total_emissions_kg: float = Field(ge=0)
 
@@ -36,7 +35,6 @@ class LeaderboardRequest(BaseModel):
     requesting_user_id: str = Field(min_length=1)
     users: List[UserRecord] = Field(min_length=1, max_length=5000)
 
-    # FIX 1B: Validate that all user_ids in the array are completely unique
     @field_validator("users")
     @classmethod
     def validate_unique_user_ids(cls, users: List[UserRecord]) -> List[UserRecord]:
@@ -44,6 +42,12 @@ class LeaderboardRequest(BaseModel):
         if len(ids) != len(set(ids)):
             raise ValueError("Duplicate user_id values are not allowed.")
         return users
+
+class UserStatsRequest(BaseModel):
+    user_id: str = Field(min_length=1)
+    total_scans: int = Field(ge=0)
+    mom_change_percentage: float
+    percentile_score: float = Field(ge=0, le=100)
 
 # --- ENDPOINT 1: Estimation ---
 @app.post("/api/estimate")
@@ -136,7 +140,6 @@ async def get_leaderboard(data: LeaderboardRequest):
         for i, u in enumerate(sorted_users[:10])
     ]
 
-    # FIX 2: Group the output into "leaderboard" and "stats" objects for the frontend
     return {
         "success": True,
         "leaderboard": top_10,
@@ -147,4 +150,45 @@ async def get_leaderboard(data: LeaderboardRequest):
             "global_average_kg": round(global_average, 2),
             "status_message": f"You are more sustainable than {round(percentile)}% of users!"
         }
+    }
+
+# --- ENDPOINT 4: Achievements & Badges ---
+@app.post("/api/achievements")
+async def get_achievements(stats: UserStatsRequest):
+    """
+    Evaluates a user's stats against rule-based thresholds to award badges.
+    """
+    earned_badges = []
+    next_goals = []
+
+    # Rule 1: Scans
+    if stats.total_scans >= 1:
+        earned_badges.append({"badge": "First Step", "description": "Scanned your first item."})
+    else:
+        next_goals.append({"badge": "First Step", "progress": f"{stats.total_scans}/1 items"})
+
+    if stats.total_scans >= 10:
+        earned_badges.append({"badge": "Eco Beginner", "description": "Scanned 10 items."})
+    elif stats.total_scans >= 1:
+        next_goals.append({"badge": "Eco Beginner", "progress": f"{stats.total_scans}/10 items"})
+
+    # Rule 2: Month-over-Month Reduction (negative % is good)
+    if stats.mom_change_percentage <= -15.0:
+        earned_badges.append({"badge": "Carbon Cutter", "description": "Reduced emissions by 15% MoM."})
+    else:
+        next_goals.append({"badge": "Carbon Cutter", "progress": f"Current: {stats.mom_change_percentage}% (Target: -15.0%)"})
+
+    # Rule 3: Leaderboard Percentile
+    if stats.percentile_score >= 90.0:
+        earned_badges.append({"badge": "Global Guardian", "description": "Reached the Top 10% globally."})
+    else:
+        current_top = round(100 - stats.percentile_score, 1)
+        next_goals.append({"badge": "Global Guardian", "progress": f"Current: Top {current_top}% (Target: Top 10%)"})
+
+    return {
+        "success": True,
+        "user_id": stats.user_id,
+        "total_earned": len(earned_badges),
+        "earned_badges": earned_badges,
+        "next_goals": next_goals
     }
