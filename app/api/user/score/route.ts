@@ -7,6 +7,7 @@ import {
   getSustainabilityTier,
   calculateScanPoints,
   checkAchievements,
+  shouldConfirmImmediately,
 } from '@/lib/rewards-system';
 
 export async function GET(req: Request) {
@@ -230,6 +231,8 @@ export async function POST(req: Request) {
           streakCount: newStreakCount,
           bestStreakCount: newBestStreak,
           lastScanDate: now,
+        },
+        $max: {
           level: levelData.level,
         },
         $push: {
@@ -266,6 +269,7 @@ export async function POST(req: Request) {
     }
 
     // Insert achievements with deduplication
+    const isAchievementConfirmed = shouldConfirmImmediately('achievement');
     let actuallyInsertedAchievements = 0;
     for (const record of achievementRecords) {
       const inserted = await User.findOneAndUpdate(
@@ -275,6 +279,8 @@ export async function POST(req: Request) {
           $inc: {
             rewardPoints: record.points,
             totalPointsEarned: record.points,
+            confirmedPoints: isAchievementConfirmed ? record.points : 0,
+            unconfirmedPoints: isAchievementConfirmed ? 0 : record.points,
           },
         },
         { new: false }
