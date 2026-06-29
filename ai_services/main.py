@@ -48,6 +48,8 @@ class UserStatsRequest(BaseModel):
     total_scans: int = Field(ge=0)
     mom_change_percentage: float
     percentile_score: float = Field(ge=0, le=100)
+    # FIX: Add an array so the frontend can tell us what the user already unlocked
+    previously_earned_badges: List[str] = Field(default_factory=list)
 
 # --- ENDPOINT 1: Estimation ---
 @app.post("/api/estimate")
@@ -157,38 +159,50 @@ async def get_leaderboard(data: LeaderboardRequest):
 async def get_achievements(stats: UserStatsRequest):
     """
     Evaluates a user's stats against rule-based thresholds to award badges.
+    Distinguishes between newly earned and previously earned badges.
     """
-    earned_badges = []
+    eligible_badges = []
     next_goals = []
 
     # Rule 1: Scans
     if stats.total_scans >= 1:
-        earned_badges.append({"badge": "First Step", "description": "Scanned your first item."})
+        eligible_badges.append({"badge": "First Step", "description": "Scanned your first item."})
     else:
         next_goals.append({"badge": "First Step", "progress": f"{stats.total_scans}/1 items"})
 
     if stats.total_scans >= 10:
-        earned_badges.append({"badge": "Eco Beginner", "description": "Scanned 10 items."})
+        eligible_badges.append({"badge": "Eco Beginner", "description": "Scanned 10 items."})
     elif stats.total_scans >= 1:
         next_goals.append({"badge": "Eco Beginner", "progress": f"{stats.total_scans}/10 items"})
 
     # Rule 2: Month-over-Month Reduction (negative % is good)
     if stats.mom_change_percentage <= -15.0:
-        earned_badges.append({"badge": "Carbon Cutter", "description": "Reduced emissions by 15% MoM."})
+        eligible_badges.append({"badge": "Carbon Cutter", "description": "Reduced emissions by 15% MoM."})
     else:
         next_goals.append({"badge": "Carbon Cutter", "progress": f"Current: {stats.mom_change_percentage}% (Target: -15.0%)"})
 
     # Rule 3: Leaderboard Percentile
     if stats.percentile_score >= 90.0:
-        earned_badges.append({"badge": "Global Guardian", "description": "Reached the Top 10% globally."})
+        eligible_badges.append({"badge": "Global Guardian", "description": "Reached the Top 10% globally."})
     else:
         current_top = round(100 - stats.percentile_score, 1)
         next_goals.append({"badge": "Global Guardian", "progress": f"Current: Top {current_top}% (Target: Top 10%)"})
 
+    # FIX: Split the eligible badges into newly earned vs previously earned
+    newly_earned = []
+    previously_earned = []
+    
+    for badge in eligible_badges:
+        if badge["badge"] in stats.previously_earned_badges:
+            previously_earned.append(badge)
+        else:
+            newly_earned.append(badge)
+
     return {
         "success": True,
         "user_id": stats.user_id,
-        "total_earned": len(earned_badges),
-        "earned_badges": earned_badges,
+        "total_new_badges": len(newly_earned),
+        "newly_earned_badges": newly_earned,
+        "previously_earned_badges": previously_earned,
         "next_goals": next_goals
     }
