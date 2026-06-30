@@ -9,7 +9,15 @@ import {
   getUserPointsSummary,
 } from '@/lib/rewards-system';
 
-// GET /api/rewards - Get user's complete rewards data
+// Repeatable/consumable shop items that can be purchased multiple times
+const REPEATABLE_ITEMS = ['streak_protector', 'double_points'];
+
+/**
+ * GET /api/rewards - Get user's complete rewards data
+ * Fetches user's current points, transaction history, achievements, and lists
+ * all available shop items. Injected logic preserves repeatable/consumable
+ * items in the available items list even after purchase.
+ */
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const email = req.headers.get('x-user-email');
@@ -135,9 +143,11 @@ export async function GET(req: Request) {
       (item) => item.itemId
     );
 
-    // Filter available shop items (not yet purchased)
+    // Filter available shop items (not yet purchased, unless repeatable)
     const availableShopItems = REWARD_SHOP_ITEMS.filter(
-      (item) => !purchasedItemIds.includes(item.id)
+      (item) =>
+        REPEATABLE_ITEMS.includes(item.id) ||
+        !purchasedItemIds.includes(item.id)
     );
 
     return NextResponse.json({
@@ -187,7 +197,12 @@ export async function GET(req: Request) {
   }
 }
 
-// POST /api/rewards/redeem - Redeem reward points for shop items
+/**
+ * POST /api/rewards/redeem - Redeem reward points for shop items
+ * Validates purchase eligibility and updates user status. Repeatable items (e.g.
+ * streak protectors, double points) bypass duplicate-purchase validation and are
+ * omitted from the unique constraint query in the atomic update.
+ */
 export async function POST(req: Request) {
   const email = req.headers.get('x-user-email');
 
@@ -228,10 +243,11 @@ export async function POST(req: Request) {
       );
     }
 
-    // Check if user already purchased this item
-    const alreadyPurchased = user.purchasedItems?.some(
-      (item) => item.itemId === itemId
-    );
+    // Check if user already purchased this item (only for non-repeatable items)
+    const isRepeatable = REPEATABLE_ITEMS.includes(itemId);
+    const alreadyPurchased =
+      !isRepeatable &&
+      user.purchasedItems?.some((item) => item.itemId === itemId);
     if (alreadyPurchased) {
       return NextResponse.json(
         { error: 'Item already purchased' },
@@ -334,12 +350,21 @@ export async function POST(req: Request) {
     }
 
     // Execute atomic update - MongoDB guarantees single-document atomicity
+    const updateFilter: {
+      email: string;
+      confirmedPoints: { $gte: number };
+      'purchasedItems.itemId'?: { $ne: string };
+    } = {
+      email,
+      confirmedPoints: { $gte: shopItem.cost },
+    };
+
+    if (!isRepeatable) {
+      updateFilter['purchasedItems.itemId'] = { $ne: itemId };
+    }
+
     const updatedUser = await User.findOneAndUpdate(
-      {
-        email,
-        confirmedPoints: { $gte: shopItem.cost },
-        'purchasedItems.itemId': { $ne: itemId },
-      },
+      updateFilter,
       updateQuery,
       { new: true } // Return the updated document
     );
