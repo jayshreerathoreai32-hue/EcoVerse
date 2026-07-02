@@ -36,23 +36,7 @@ export interface RewardShopItem {
   category: 'badge' | 'feature' | 'cosmetic';
   available: boolean;
 }
-feat/scan-streak-system-121-clean
-// RewardUser: used by streak tests and rewards API — requires non-optional fields
-// so callers can pass a plain object without worrying about nullish checks.
-// NEW: Proper TypeScript interface to replace 'any' and 'unknown'
-export interface RewardUser {
-  totalScanned: number;
-  streakCount: number;
-  monthlyCarbon: number;
-  level: number;
-  scans?: {
-    carbonEstimate: number;
-    productName: string;
-    category: string;
-    confidence: 'high' | 'medium' | 'low' | string;
-    barcode: string;
-    date: Date;
-  }[];
+
 // Minimal shape of a user document that the rewards-system functions need.
 // Fields are optional and reuse the real Mongoose interfaces from
 // models/User.ts (rather than redeclaring the shape inline) so this type
@@ -63,7 +47,6 @@ export interface RewardUser {
   streakCount?: number;
   monthlyCarbon?: number;
   level?: number;
-  main
   totalPointsEarned?: number;
   confirmedPoints?: number;
   unconfirmedPoints?: number;
@@ -73,15 +56,9 @@ export interface RewardUser {
   rewardTransactions?: IRewardTransaction[];
 }
 
-feat/scan-streak-system-121-clean
-// User Points Data interface
-export interface UserPointsData extends RewardUser {
-  // Additional fields specific to user points tracking
-}
 // Alias kept for backwards compatibility with code/tests written against
 // the earlier name for this type.
 export type UserPointsData = RewardUser;
-main
 
 // Point confirmation system configuration
 export const POINT_CONFIRMATION = {

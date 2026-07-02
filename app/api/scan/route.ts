@@ -15,7 +15,6 @@ import {
   calculateStreakUpdate,
   shouldConfirmImmediately,
 } from '@/lib/rewards-system';
-import { processStreak } from '@/lib/streak-system';
 import { inferPackaging } from '@/lib/packaging-inference';
 
 type OpenFoodFactsResponse = {
@@ -39,14 +38,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { barcode, timezoneOffset } = await req.json();
+  const { barcode } = await req.json();
 
   if (!barcode) {
     return NextResponse.json({ error: 'Barcode missing' }, { status: 400 });
   }
-
-  // Default to 0 if not provided by client
-  const tzOffset = timezoneOffset || 0;
 
   try {
     const productRes = await axios.get<OpenFoodFactsResponse>(
@@ -132,82 +128,6 @@ export async function POST(req: Request) {
         isConfirmed = pointsData.isConfirmed;
         pointsEarned = pointsData.points;
         scanTimestamp = new Date();
-        
-      feat/scan-streak-system-121-clean
-      const isFirstScan = (user.totalScanned ?? 0) === 0;
-      const totalScans = user.totalScanned ?? 0;
-      
-      const currentScanDate = new Date();
-      
-      const streakResult = processStreak(
-        {
-          lastScanDate: user.lastScanDate,
-          streakCount: user.streakCount ?? 0,
-          bestStreakCount: user.bestStreakCount ?? 0,
-          streakProtectors: user.streakProtectors ?? 0
-        },
-        currentScanDate,
-        tzOffset
-      );
-
-      // Only apply streak bonus and daily scan base points if it's the first scan of the day
-      const pointsData = calculateScanPoints
-        ? calculateScanPoints(
-            carbonEstimate,
-            isFirstScan,
-            streakResult.streakCount,
-            totalScans,
-            streakResult.isFirstScanOfDay
-          )
-        : { points: 0, reasons: [], isConfirmed: false };
-
-      const isConfirmed = pointsData.isConfirmed;
-      const pointsEarned = pointsData.points;
-
-      // Prepare atomic updates
-      const setUpdate: any = {
-        streakCount: streakResult.streakCount,
-        bestStreakCount: streakResult.bestStreakCount
-      };
-      
-      if (streakResult.lastScanDate) {
-        setUpdate.lastScanDate = streakResult.lastScanDate;
-      }
-
-      // --- ATOMIC DATABASE UPDATE ---
-      // We perform the atomic increment to update points and scans first.
-      // We also push a new reward transaction record so it can be referenced later.
-      const initialUpdate = await User.findOneAndUpdate(
-        { email: userEmail },
-        {
-          $set: setUpdate,
-          $inc: {
-            monthlyCarbon: carbonEstimate,
-            totalScanned: 1,
-            rewardPoints: pointsEarned,
-            totalPointsEarned: pointsEarned,
-            confirmedPoints: isConfirmed ? pointsEarned : 0,
-            unconfirmedPoints: isConfirmed ? 0 : pointsEarned,
-            streakProtectors: -streakResult.protectorsUsed
-          },
-          $push: {
-            scans: {
-              productName: product.product_name,
-              carbonEstimate: carbonEstimate,
-              category: carbonData.category,
-              confidence: carbonData.confidence,
-              barcode: barcode,
-              date: currentScanDate,
-            },
-            rewardTransactions: {
-              _id: new mongoose.Types.ObjectId(),
-              type: 'earned',
-              points: pointsEarned,
-              pointsType: isConfirmed ? 'confirmed' : 'unconfirmed',
-              reason: 'scan',
-              description: `Scanned ${product.product_name}`,
-              barcode: barcode,
-              date: currentScanDate,
 
         // --- ATOMIC DATABASE UPDATE ---
         // We perform the atomic increment to update points and scans first.
@@ -256,7 +176,6 @@ export async function POST(req: Request) {
                 barcode: barcode,
                 date: scanTimestamp,
               },
-                main
             },
           },
           {
@@ -443,15 +362,9 @@ export async function POST(req: Request) {
           leveledUp: updatedUser.level > oldLevel,
           newAchievements: actuallyInsertedAchievements,
           streakCount: updatedUser.streakCount,
-       feat/scan-streak-system-121-clean
-          streakProtected: streakResult.streakSaved,
-          streakProtectorsUsed: streakResult.protectorsUsed,
-          streakLost: streakResult.lostStreak,
-          milestone: streakResult.milestone,
           bestStreakCount: updatedUser.bestStreakCount,
           streakProtectorUsed: streakUpdate.streakProtectorsUsed > 0,
           streakBroken: streakUpdate.streakBroken,
-       main
           monthlyBonus,
           sustainabilityTier:
             updatedUser.monthlyCarbon < 10 && updatedUser.totalScanned >= 15
