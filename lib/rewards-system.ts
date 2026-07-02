@@ -313,7 +313,6 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
 ];
 
-feat / scan - streak - system - 121 - clean;
 // Calculate points for a scan.
 // isFirstScanOfDay (default true) gates daily/streak bonuses — prevents
 // unlimited point farming when a user scans multiple products in one day.
@@ -405,7 +404,6 @@ export function calculateStreakUpdate(
   };
 }
 
-main;
 export function calculateScanPoints(
   carbonEstimate: number,
   isFirstScan: boolean,
