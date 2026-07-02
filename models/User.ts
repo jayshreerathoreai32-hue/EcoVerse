@@ -7,6 +7,7 @@ export interface IScan {
   confidence: 'high' | 'medium' | 'low';
   barcode: string;
   date: Date;
+  source?: string;
 }
 
 export interface IRewardTransaction {
@@ -103,6 +104,7 @@ const ScanSchema = new mongoose.Schema({
   confidence: { type: String, enum: ['high', 'medium', 'low'], required: true },
   barcode: { type: String, required: true },
   date: { type: Date, default: Date.now },
+  source: { type: String, default: 'Local Calculator' },
 });
 
 const RewardTransactionSchema = new mongoose.Schema({

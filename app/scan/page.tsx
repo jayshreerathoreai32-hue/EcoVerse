@@ -42,6 +42,7 @@ interface ProductData {
     biodegradable: boolean;
     inferred?: boolean;
   };
+  source?: string;
 }
 
 export default function ScanPage() {
@@ -132,6 +133,7 @@ export default function ScanPage() {
           biodegradable: false,
         },
         transportDistance: 'Unknown',
+        source: data.source || 'Local Calculator',
       });
 
       toast({
@@ -374,6 +376,11 @@ export default function ScanPage() {
                     {product.calculation && (
                       <p className="text-sm text-cyan-800 mt-2">
                         Calculation: {product.calculation}
+                      </p>
+                    )}
+                    {product.source && (
+                      <p className="text-xs text-cyan-700/80 mt-1 font-medium">
+                        Source: {product.source}
                       </p>
                     )}
                   </div>

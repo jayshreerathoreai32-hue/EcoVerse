@@ -252,6 +252,7 @@ export async function POST(req: Request) {
             confidence: 'medium',
             barcode: `MANUAL-${Date.now()}`,
             date: new Date(),
+            source: 'Manual Entry',
           },
           rewardTransactions: {
             _id: new mongoose.Types.ObjectId(),
